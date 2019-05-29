@@ -22,7 +22,7 @@ import setuptools
 
 name = 'google-cloud-runtimeconfig'
 description = 'Google Cloud RuntimeConfig API client library'
-version = '0.28.3'
+version = '0.29.0'
 # Should be one of:
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
@@ -30,7 +30,7 @@ version = '0.28.3'
 release_status = 'Development Status :: 3 - Alpha'
 dependencies = [
     'google-api-core >= 1.6.0, < 2.0.0dev',
-    'google-cloud-core >= 0.29.0, < 0.30dev',
+    "google-cloud-core >= 1.0.0, < 2.0dev",
 ]
 extras = {
 }
@@ -73,7 +73,6 @@ setuptools.setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

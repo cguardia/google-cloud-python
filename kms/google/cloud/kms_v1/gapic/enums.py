@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Wrappers for protocol buffer enum types."""
 
 import enum
@@ -172,7 +173,10 @@ class KeyOperationAttestation(object):
           ATTESTATION_FORMAT_UNSPECIFIED (int)
           CAVIUM_V1_COMPRESSED (int): Cavium HSM attestation compressed with gzip. Note that this format is
           defined by Cavium and subject to change at any time.
+          CAVIUM_V2_COMPRESSED (int): Cavium HSM attestation V2 compressed with gzip. This is a new format
+          Introduced in Cavium's version 3.2-08
         """
 
         ATTESTATION_FORMAT_UNSPECIFIED = 0
         CAVIUM_V1_COMPRESSED = 3
+        CAVIUM_V2_COMPRESSED = 4

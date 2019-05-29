@@ -8,7 +8,7 @@ Python Client for Google Cloud OS Login API (unreleased)
 - `Client Library Documentation`_
 - `Product Documentation`_
 
-.. _Alpha: https://github.com/GoogleCloudPlatform/google-cloud-python/blob/master/README.rst
+.. _Alpha: https://github.com/googleapis/google-cloud-python/blob/master/README.rst
 .. |pypi| image:: https://img.shields.io/pypi/v/google-cloud-oslogin.svg
    :target: https://pypi.org/project/google-cloud-oslogin/
 .. |versions| image:: https://img.shields.io/pypi/pyversions/google-cloud-oslogin.svg
@@ -48,7 +48,7 @@ dependencies.
 
 Supported Python Versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Python >= 3.4
+Python >= 3.5
 
 Deprecated Python Versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

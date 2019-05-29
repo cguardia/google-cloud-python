@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.cloud.websecurityscanner.v1alpha WebSecurityScanner API."""
 
 import functools
@@ -23,6 +24,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.page_iterator
 import google.api_core.path_template
@@ -42,6 +44,7 @@ from google.cloud.websecurityscanner_v1alpha.proto import web_security_scanner_p
 from google.cloud.websecurityscanner_v1alpha.proto import web_security_scanner_pb2_grpc
 from google.protobuf import empty_pb2
 from google.protobuf import field_mask_pb2
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution(
     "google-cloud-websecurityscanner"
@@ -83,6 +86,17 @@ class WebSecurityScannerClient(object):
     from_service_account_json = from_service_account_file
 
     @classmethod
+    def finding_path(cls, project, scan_config, scan_run, finding):
+        """Return a fully-qualified finding string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}/scanConfigs/{scan_config}/scanRuns/{scan_run}/findings/{finding}",
+            project=project,
+            scan_config=scan_config,
+            scan_run=scan_run,
+            finding=finding,
+        )
+
+    @classmethod
     def project_path(cls, project):
         """Return a fully-qualified project string."""
         return google.api_core.path_template.expand(
@@ -106,17 +120,6 @@ class WebSecurityScannerClient(object):
             project=project,
             scan_config=scan_config,
             scan_run=scan_run,
-        )
-
-    @classmethod
-    def finding_path(cls, project, scan_config, scan_run, finding):
-        """Return a fully-qualified finding string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}/scanConfigs/{scan_config}/scanRuns/{scan_run}/findings/{finding}",
-            project=project,
-            scan_config=scan_config,
-            scan_run=scan_run,
-            finding=finding,
         )
 
     def __init__(
@@ -283,6 +286,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.CreateScanConfigRequest(
             parent=parent, scan_config=scan_config
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_scan_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -338,6 +354,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.DeleteScanConfigRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_scan_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -396,6 +425,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.GetScanConfigRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_scan_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -477,6 +519,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.ListScanConfigsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -563,6 +618,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.UpdateScanConfigRequest(
             scan_config=scan_config, update_mask=update_mask
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("scan_config.name", scan_config.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_scan_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -621,6 +689,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.StartScanRunRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["start_scan_run"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -680,6 +761,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.GetScanRunRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_scan_run"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -762,6 +856,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.ListScanRunsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -832,6 +939,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.StopScanRunRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["stop_scan_run"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -914,6 +1034,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.ListCrawledUrlsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -984,6 +1117,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.GetFindingRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_finding"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1072,6 +1218,19 @@ class WebSecurityScannerClient(object):
         request = web_security_scanner_pb2.ListFindingsRequest(
             parent=parent, filter=filter_, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -1142,6 +1301,19 @@ class WebSecurityScannerClient(object):
             )
 
         request = web_security_scanner_pb2.ListFindingTypeStatsRequest(parent=parent)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["list_finding_type_stats"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

@@ -22,14 +22,14 @@ import setuptools
 
 name = "google-cloud-core"
 description = "Google Cloud API client core library"
-version = "0.29.1"
+version = "1.0.1"
 # Should be one of:
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
 # 'Development Status :: 5 - Production/Stable'
 release_status = "Development Status :: 4 - Beta"
-dependencies = ["google-api-core >= 1.0.0, < 2.0.0dev"]
-extras = {"grpc": "grpcio >= 1.8.2"}
+dependencies = ["google-api-core >= 1.11.0, < 2.0.0dev"]
+extras = {"grpc": "grpcio >= 1.8.2, < 2.0dev"}
 
 
 # Setup boilerplate below this line.
@@ -69,7 +69,6 @@ setuptools.setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         'Programming Language :: Python :: 3.7',

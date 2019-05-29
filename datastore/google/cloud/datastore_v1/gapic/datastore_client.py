@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.datastore.v1 Datastore API."""
 
 import pkg_resources
@@ -22,6 +23,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.protobuf_helpers
 import grpc
@@ -33,6 +35,7 @@ from google.cloud.datastore_v1.proto import datastore_pb2
 from google.cloud.datastore_v1.proto import datastore_pb2_grpc
 from google.cloud.datastore_v1.proto import entity_pb2
 from google.cloud.datastore_v1.proto import query_pb2
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution(
     "google-cloud-datastore"
@@ -243,6 +246,19 @@ class DatastoreClient(object):
         request = datastore_pb2.LookupRequest(
             project_id=project_id, keys=keys, read_options=read_options
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["lookup"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -336,6 +352,19 @@ class DatastoreClient(object):
             query=query,
             gql_query=gql_query,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["run_query"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -400,6 +429,19 @@ class DatastoreClient(object):
         request = datastore_pb2.BeginTransactionRequest(
             project_id=project_id, transaction_options=transaction_options
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["begin_transaction"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -497,6 +539,19 @@ class DatastoreClient(object):
             mutations=mutations,
             transaction=transaction,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["commit"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -562,6 +617,19 @@ class DatastoreClient(object):
         request = datastore_pb2.RollbackRequest(
             project_id=project_id, transaction=transaction
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["rollback"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -629,6 +697,19 @@ class DatastoreClient(object):
             )
 
         request = datastore_pb2.AllocateIdsRequest(project_id=project_id, keys=keys)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["allocate_ids"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -700,6 +781,19 @@ class DatastoreClient(object):
         request = datastore_pb2.ReserveIdsRequest(
             project_id=project_id, keys=keys, database_id=database_id
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("project_id", project_id)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["reserve_ids"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

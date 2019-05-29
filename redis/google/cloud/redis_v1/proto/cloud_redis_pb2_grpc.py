@@ -23,7 +23,7 @@ class CloudRedisStub(object):
   * As such, Redis instances are resources of the form:
   `/projects/{project_id}/locations/{location_id}/instances/{instance_id}`
 
-  Note that location_id must be refering to a GCP `region`; for example:
+  Note that location_id must be referring to a GCP `region`; for example:
   * `projects/redpepper-1290/locations/us-central1/instances/my-redis`
   """
 
@@ -53,6 +53,11 @@ class CloudRedisStub(object):
             request_serializer=google_dot_cloud_dot_redis__v1_dot_proto_dot_cloud__redis__pb2.UpdateInstanceRequest.SerializeToString,
             response_deserializer=google_dot_longrunning_dot_operations__pb2.Operation.FromString,
         )
+        self.FailoverInstance = channel.unary_unary(
+            "/google.cloud.redis.v1.CloudRedis/FailoverInstance",
+            request_serializer=google_dot_cloud_dot_redis__v1_dot_proto_dot_cloud__redis__pb2.FailoverInstanceRequest.SerializeToString,
+            response_deserializer=google_dot_longrunning_dot_operations__pb2.Operation.FromString,
+        )
         self.DeleteInstance = channel.unary_unary(
             "/google.cloud.redis.v1.CloudRedis/DeleteInstance",
             request_serializer=google_dot_cloud_dot_redis__v1_dot_proto_dot_cloud__redis__pb2.DeleteInstanceRequest.SerializeToString,
@@ -74,7 +79,7 @@ class CloudRedisServicer(object):
   * As such, Redis instances are resources of the form:
   `/projects/{project_id}/locations/{location_id}/instances/{instance_id}`
 
-  Note that location_id must be refering to a GCP `region`; for example:
+  Note that location_id must be referring to a GCP `region`; for example:
   * `projects/redpepper-1290/locations/us-central1/instances/my-redis`
   """
 
@@ -128,6 +133,14 @@ class CloudRedisServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def FailoverInstance(self, request, context):
+        """Failover the master role to current replica node against a specific
+    STANDARD tier redis instance.
+    """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def DeleteInstance(self, request, context):
         """Deletes a specific Redis instance.  Instance stops serving and data is
     deleted.
@@ -157,6 +170,11 @@ def add_CloudRedisServicer_to_server(servicer, server):
         "UpdateInstance": grpc.unary_unary_rpc_method_handler(
             servicer.UpdateInstance,
             request_deserializer=google_dot_cloud_dot_redis__v1_dot_proto_dot_cloud__redis__pb2.UpdateInstanceRequest.FromString,
+            response_serializer=google_dot_longrunning_dot_operations__pb2.Operation.SerializeToString,
+        ),
+        "FailoverInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.FailoverInstance,
+            request_deserializer=google_dot_cloud_dot_redis__v1_dot_proto_dot_cloud__redis__pb2.FailoverInstanceRequest.FromString,
             response_serializer=google_dot_longrunning_dot_operations__pb2.Operation.SerializeToString,
         ),
         "DeleteInstance": grpc.unary_unary_rpc_method_handler(

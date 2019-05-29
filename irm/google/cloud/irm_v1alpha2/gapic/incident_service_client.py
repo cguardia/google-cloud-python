@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.cloud.irm.v1alpha2 IncidentService API."""
 
 import functools
@@ -23,6 +24,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.page_iterator
 import google.api_core.path_template
@@ -36,6 +38,7 @@ from google.cloud.irm_v1alpha2.proto import incidents_service_pb2
 from google.cloud.irm_v1alpha2.proto import incidents_service_pb2_grpc
 from google.protobuf import empty_pb2
 from google.protobuf import field_mask_pb2
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution("google-cloud-irm").version
 
@@ -71,22 +74,6 @@ class IncidentServiceClient(object):
     from_service_account_json = from_service_account_file
 
     @classmethod
-    def project_path(cls, project):
-        """Return a fully-qualified project string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}", project=project
-        )
-
-    @classmethod
-    def incident_path(cls, project, incident):
-        """Return a fully-qualified incident string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}/incidents/{incident}",
-            project=project,
-            incident=incident,
-        )
-
-    @classmethod
     def annotation_path(cls, project, incident, annotation):
         """Return a fully-qualified annotation string."""
         return google.api_core.path_template.expand(
@@ -107,6 +94,22 @@ class IncidentServiceClient(object):
         )
 
     @classmethod
+    def incident_path(cls, project, incident):
+        """Return a fully-qualified incident string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}/incidents/{incident}",
+            project=project,
+            incident=incident,
+        )
+
+    @classmethod
+    def project_path(cls, project):
+        """Return a fully-qualified project string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}", project=project
+        )
+
+    @classmethod
     def role_assignment_path(cls, project, incident, role_assignment):
         """Return a fully-qualified role_assignment string."""
         return google.api_core.path_template.expand(
@@ -114,6 +117,13 @@ class IncidentServiceClient(object):
             project=project,
             incident=incident,
             role_assignment=role_assignment,
+        )
+
+    @classmethod
+    def signal_path(cls, project, signal):
+        """Return a fully-qualified signal string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}/signals/{signal}", project=project, signal=signal
         )
 
     @classmethod
@@ -134,13 +144,6 @@ class IncidentServiceClient(object):
             project=project,
             incident=incident,
             tag=tag,
-        )
-
-    @classmethod
-    def signal_path(cls, project, signal):
-        """Return a fully-qualified signal string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}/signals/{signal}", project=project, signal=signal
         )
 
     def __init__(
@@ -305,6 +308,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateIncidentRequest(
             incident=incident, parent=parent
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_incident"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -329,7 +345,7 @@ class IncidentServiceClient(object):
             >>> response = client.get_incident(name)
 
         Args:
-            name (str): Resource name of the incident, e.g.
+            name (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             retry (Optional[google.api_core.retry.Retry]):  A retry object used
                 to retry requests. If ``None`` is specified, requests will not
@@ -362,6 +378,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.GetIncidentRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_incident"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -409,26 +438,33 @@ class IncidentServiceClient(object):
                 Search atoms can be used to match certain specific fields. Otherwise,
                 plain text will match text fields in the incident.
 
-                Search atoms: * ``start`` - (timestamp) The time the incident started.
-                * ``stage`` - The stage of the incident, one of detected, triaged,
-                mitigated, resolved, documented, or duplicate (which correspond to
-                values in the Incident.Stage enum). These are ordered, so
-                ``stage<resolved`` is equivalent to
-                ``stage:detected OR stage:triaged OR stage:mitigated``. * ``severity``
-                - (Incident.Severity) The severity of the incident. + Supports matching
-                on a specific severity (e.g., ``severity:major``) or on a range (e.g.,
-                ``severity>medium``, ``severity<=minor``, etc.).
+                Search atoms:
 
-                Timestamp formats: * yyyy-MM-dd - an absolute date, treated as a
-                calendar-day-wide window. In other words, the "<" operator will match
-                dates before that date, the ">" operator will match dates after that
-                date, and the ":" or "=" operators will match the entire day. * Nd
-                (e.g. 7d) - a relative number of days ago, treated as a moment in time
-                (as opposed to a day-wide span) a multiple of 24 hours ago (as opposed
-                to calendar days). In the case of daylight savings time, it will apply
-                the current timezone to both ends of the range. Note that exact matching
-                (e.g. ``start:7d``) is unlikely to be useful because that would only
-                match incidents created precisely at a particular instant in time.
+                -  ``start`` - (timestamp) The time the incident started.
+                -  ``stage`` - The stage of the incident, one of detected, triaged,
+                   mitigated, resolved, documented, or duplicate (which correspond to
+                   values in the Incident.Stage enum). These are ordered, so
+                   ``stage<resolved`` is equivalent to
+                   ``stage:detected OR stage:triaged OR stage:mitigated``.
+                -  ``severity`` - (Incident.Severity) The severity of the incident.
+
+                   -  Supports matching on a specific severity (for example,
+                      ``severity:major``) or on a range (for example,
+                      ``severity>medium``, ``severity<=minor``, etc.).
+
+                Timestamp formats:
+
+                -  yyyy-MM-dd - an absolute date, treated as a calendar-day-wide window.
+                   In other words, the "<" operator will match dates before that date,
+                   the ">" operator will match dates after that date, and the ":" or "="
+                   operators will match the entire day.
+                -  Nd (for example, 7d) - a relative number of days ago, treated as a
+                   moment in time (as opposed to a day-wide span). A multiple of 24
+                   hours ago (as opposed to calendar days). In the case of daylight
+                   savings time, it will apply the current timezone to both ends of the
+                   range. Note that exact matching (for example, ``start:7d``) is
+                   unlikely to be useful because that would only match incidents created
+                   precisely at a particular instant in time.
 
                 Examples:
 
@@ -443,14 +479,14 @@ class IncidentServiceClient(object):
                 -  ``start>2018-11-28`` - matches incidents which started after November
                    11,
 
-                2018.
+                   2018.
 
                 -  ``start<=2018-11-28`` - matches incidents which started on or before
                    November 11, 2018.
                 -  ``start:2018-11-28`` - matches incidents which started on November
                    11,
 
-                2018.
+                   2018.
 
                 -  ``start>7d`` - matches incidents which started after the point in
                    time 7*24 hours ago
@@ -504,6 +540,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.SearchIncidentsRequest(
             parent=parent, query=query, page_size=page_size, time_zone=time_zone
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -582,6 +631,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.UpdateIncidentRequest(
             incident=incident, update_mask=update_mask
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("incident.name", incident.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_incident"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -621,7 +683,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            name (str): Resource name of the incident or signal, e.g.
+            name (str): Resource name of the incident or signal, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -664,6 +726,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.SearchSimilarIncidentsRequest(
             name=name, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -704,7 +779,7 @@ class IncidentServiceClient(object):
             >>> response = client.create_annotation(parent, annotation)
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             annotation (Union[dict, ~google.cloud.irm_v1alpha2.types.Annotation]): Only annotation.content is an input argument.
 
@@ -743,6 +818,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateAnnotationRequest(
             parent=parent, annotation=annotation
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_annotation"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -781,7 +869,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -824,6 +912,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ListAnnotationsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -838,73 +939,6 @@ class IncidentServiceClient(object):
             response_token_field="next_page_token",
         )
         return iterator
-
-    def update_annotation(
-        self,
-        annotation,
-        update_mask=None,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Updates an annotation on an existing incident.
-
-        Example:
-            >>> from google.cloud import irm_v1alpha2
-            >>>
-            >>> client = irm_v1alpha2.IncidentServiceClient()
-            >>>
-            >>> # TODO: Initialize `annotation`:
-            >>> annotation = {}
-            >>>
-            >>> response = client.update_annotation(annotation)
-
-        Args:
-            annotation (Union[dict, ~google.cloud.irm_v1alpha2.types.Annotation]): The annotation to update with the new values.
-
-                If a dict is provided, it must be of the same form as the protobuf
-                message :class:`~google.cloud.irm_v1alpha2.types.Annotation`
-            update_mask (Union[dict, ~google.cloud.irm_v1alpha2.types.FieldMask]): List of fields that should be updated.
-
-                If a dict is provided, it must be of the same form as the protobuf
-                message :class:`~google.cloud.irm_v1alpha2.types.FieldMask`
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.cloud.irm_v1alpha2.types.Annotation` instance.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "update_annotation" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "update_annotation"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.update_annotation,
-                default_retry=self._method_configs["UpdateAnnotation"].retry,
-                default_timeout=self._method_configs["UpdateAnnotation"].timeout,
-                client_info=self._client_info,
-            )
-
-        request = incidents_service_pb2.UpdateAnnotationRequest(
-            annotation=annotation, update_mask=update_mask
-        )
-        return self._inner_api_calls["update_annotation"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
 
     def create_tag(
         self,
@@ -930,7 +964,7 @@ class IncidentServiceClient(object):
             >>> response = client.create_tag(parent, tag)
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             tag (Union[dict, ~google.cloud.irm_v1alpha2.types.Tag]): Tag to create. Only tag.display_name is an input argument.
 
@@ -967,6 +1001,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.CreateTagRequest(parent=parent, tag=tag)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_tag"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1020,6 +1067,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.DeleteTagRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_tag"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1057,7 +1117,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -1100,6 +1160,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ListTagsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -1178,14 +1251,27 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateSignalRequest(
             parent=parent, signal=signal
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_signal"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
-    def list_signals(
+    def search_signals(
         self,
         parent,
-        filter_=None,
+        query=None,
         page_size=None,
         retry=google.api_core.gapic_v1.method.DEFAULT,
         timeout=google.api_core.gapic_v1.method.DEFAULT,
@@ -1203,7 +1289,7 @@ class IncidentServiceClient(object):
             >>> parent = client.project_path('[PROJECT]')
             >>>
             >>> # Iterate over all results
-            >>> for element in client.list_signals(parent):
+            >>> for element in client.search_signals(parent):
             ...     # process element
             ...     pass
             >>>
@@ -1211,7 +1297,7 @@ class IncidentServiceClient(object):
             >>> # Alternatively:
             >>>
             >>> # Iterate over results one page at a time
-            >>> for page in client.list_signals(parent).pages:
+            >>> for page in client.search_signals(parent).pages:
             ...     for element in page:
             ...         # process element
             ...         pass
@@ -1219,7 +1305,7 @@ class IncidentServiceClient(object):
         Args:
             parent (str): The resource name of the hosting Stackdriver project which requested
                 incidents belong to.
-            filter_ (str): Filter to specify which signals should be returned.
+            query (str): Query to specify which signals should be returned.
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
                 resource, this parameter does not affect the return value. If page
@@ -1248,23 +1334,36 @@ class IncidentServiceClient(object):
             ValueError: If the parameters are invalid.
         """
         # Wrap the transport method to add retry and timeout logic.
-        if "list_signals" not in self._inner_api_calls:
+        if "search_signals" not in self._inner_api_calls:
             self._inner_api_calls[
-                "list_signals"
+                "search_signals"
             ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.list_signals,
-                default_retry=self._method_configs["ListSignals"].retry,
-                default_timeout=self._method_configs["ListSignals"].timeout,
+                self.transport.search_signals,
+                default_retry=self._method_configs["SearchSignals"].retry,
+                default_timeout=self._method_configs["SearchSignals"].timeout,
                 client_info=self._client_info,
             )
 
-        request = incidents_service_pb2.ListSignalsRequest(
-            parent=parent, filter=filter_, page_size=page_size
+        request = incidents_service_pb2.SearchSignalsRequest(
+            parent=parent, query=query, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
-                self._inner_api_calls["list_signals"],
+                self._inner_api_calls["search_signals"],
                 retry=retry,
                 timeout=timeout,
                 metadata=metadata,
@@ -1296,7 +1395,7 @@ class IncidentServiceClient(object):
             >>> response = client.get_signal(name)
 
         Args:
-            name (str): Resource name of the Signal resource, e.g.
+            name (str): Resource name of the Signal resource, for example,
                 "projects/{project_id}/signals/{signal_id}".
             retry (Optional[google.api_core.retry.Retry]):  A retry object used
                 to retry requests. If ``None`` is specified, requests will not
@@ -1329,6 +1428,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.GetSignalRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_signal"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1342,7 +1454,7 @@ class IncidentServiceClient(object):
         metadata=None,
     ):
         """
-        Updates an existing signal (e.g. to assign/unassign it to an
+        Updates an existing signal (for example, to assign/unassign it to an
         incident).
 
         Example:
@@ -1397,65 +1509,20 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.UpdateSignalRequest(
             signal=signal, update_mask=update_mask
         )
-        return self._inner_api_calls["update_signal"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def acknowledge_signal(
-        self,
-        name,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Acks a signal. This acknowledges the signal in the underlying system,
-        indicating that the caller takes responsibility for looking into this.
-
-        Example:
-            >>> from google.cloud import irm_v1alpha2
-            >>>
-            >>> client = irm_v1alpha2.IncidentServiceClient()
-            >>>
-            >>> name = client.signal_path('[PROJECT]', '[SIGNAL]')
-            >>>
-            >>> response = client.acknowledge_signal(name)
-
-        Args:
-            name (str): Resource name of the Signal resource, e.g.
-                "projects/{project_id}/signals/{signal_id}".
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.cloud.irm_v1alpha2.types.AcknowledgeSignalResponse` instance.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "acknowledge_signal" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "acknowledge_signal"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.acknowledge_signal,
-                default_retry=self._method_configs["AcknowledgeSignal"].retry,
-                default_timeout=self._method_configs["AcknowledgeSignal"].timeout,
-                client_info=self._client_info,
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("signal.name", signal.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
             )
+            metadata.append(routing_metadata)
 
-        request = incidents_service_pb2.AcknowledgeSignalRequest(name=name)
-        return self._inner_api_calls["acknowledge_signal"](
+        return self._inner_api_calls["update_signal"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
@@ -1549,6 +1616,19 @@ class IncidentServiceClient(object):
             roles=roles,
             artifacts=artifacts,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("incident.name", incident.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["escalate_incident"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1577,7 +1657,7 @@ class IncidentServiceClient(object):
             >>> response = client.create_artifact(parent, artifact)
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             artifact (Union[dict, ~google.cloud.irm_v1alpha2.types.Artifact]): The artifact to create.
 
@@ -1616,6 +1696,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateArtifactRequest(
             parent=parent, artifact=artifact
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_artifact"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1653,7 +1746,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -1696,6 +1789,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ListArtifactsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -1774,6 +1880,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.UpdateArtifactRequest(
             artifact=artifact, update_mask=update_mask
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("artifact.name", artifact.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_artifact"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1827,65 +1946,20 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.DeleteArtifactRequest(name=name)
-        self._inner_api_calls["delete_artifact"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def get_shift_handoff_presets(
-        self,
-        parent,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Returns "presets" specific to shift handoff (see SendShiftHandoff), e.g.
-        default values for handoff message fields.
-
-        Example:
-            >>> from google.cloud import irm_v1alpha2
-            >>>
-            >>> client = irm_v1alpha2.IncidentServiceClient()
-            >>>
-            >>> parent = client.project_path('[PROJECT]')
-            >>>
-            >>> response = client.get_shift_handoff_presets(parent)
-
-        Args:
-            parent (str): Resource name of the Stackdriver project that the presets belong to.
-                e.g. ``projects/{project_id}``
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.cloud.irm_v1alpha2.types.ShiftHandoffPresets` instance.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "get_shift_handoff_presets" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "get_shift_handoff_presets"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.get_shift_handoff_presets,
-                default_retry=self._method_configs["GetShiftHandoffPresets"].retry,
-                default_timeout=self._method_configs["GetShiftHandoffPresets"].timeout,
-                client_info=self._client_info,
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
             )
+            metadata.append(routing_metadata)
 
-        request = incidents_service_pb2.GetShiftHandoffPresetsRequest(parent=parent)
-        return self._inner_api_calls["get_shift_handoff_presets"](
+        self._inner_api_calls["delete_artifact"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
@@ -1923,12 +1997,12 @@ class IncidentServiceClient(object):
 
         Args:
             parent (str): The resource name of the Stackdriver project that the handoff is being
-                sent from. e.g. ``projects/{project_id}``
-            recipients (list[str]): Email addresses of the recipients of the handoff, e.g. "user@example.com".
-                Must contain at least one entry.
+                sent from. for example, ``projects/{project_id}``
+            recipients (list[str]): Email addresses of the recipients of the handoff, for example,
+                "user@example.com". Must contain at least one entry.
             subject (str): The subject of the email. Required.
             cc (list[str]): Email addresses that should be CC'd on the handoff. Optional.
-            notes_content_type (str): Content type string, e.g. 'text/plain' or 'text/html'.
+            notes_content_type (str): Content type string, for example, 'text/plain' or 'text/html'.
             notes_content (str): Additional notes to be included in the handoff. Optional.
             incidents (list[Union[dict, ~google.cloud.irm_v1alpha2.types.Incident]]): The set of incidents that should be included in the handoff. Optional.
 
@@ -1976,6 +2050,19 @@ class IncidentServiceClient(object):
             incidents=incidents,
             preview_only=preview_only,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["send_shift_handoff"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2007,7 +2094,7 @@ class IncidentServiceClient(object):
             >>> response = client.create_subscription(parent, subscription)
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             subscription (Union[dict, ~google.cloud.irm_v1alpha2.types.Subscription]): The subscription to create.
 
@@ -2046,7 +2133,100 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateSubscriptionRequest(
             parent=parent, subscription=subscription
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_subscription"](
+            request, retry=retry, timeout=timeout, metadata=metadata
+        )
+
+    def update_subscription(
+        self,
+        subscription,
+        update_mask=None,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Updates a subscription.
+
+        Example:
+            >>> from google.cloud import irm_v1alpha2
+            >>>
+            >>> client = irm_v1alpha2.IncidentServiceClient()
+            >>>
+            >>> # TODO: Initialize `subscription`:
+            >>> subscription = {}
+            >>>
+            >>> response = client.update_subscription(subscription)
+
+        Args:
+            subscription (Union[dict, ~google.cloud.irm_v1alpha2.types.Subscription]): The subscription to update, with new values.
+
+                If a dict is provided, it must be of the same form as the protobuf
+                message :class:`~google.cloud.irm_v1alpha2.types.Subscription`
+            update_mask (Union[dict, ~google.cloud.irm_v1alpha2.types.FieldMask]): List of fields that should be updated.
+
+                If a dict is provided, it must be of the same form as the protobuf
+                message :class:`~google.cloud.irm_v1alpha2.types.FieldMask`
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Returns:
+            A :class:`~google.cloud.irm_v1alpha2.types.Subscription` instance.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "update_subscription" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "update_subscription"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.update_subscription,
+                default_retry=self._method_configs["UpdateSubscription"].retry,
+                default_timeout=self._method_configs["UpdateSubscription"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = incidents_service_pb2.UpdateSubscriptionRequest(
+            subscription=subscription, update_mask=update_mask
+        )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("subscription.name", subscription.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        return self._inner_api_calls["update_subscription"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
@@ -2083,7 +2263,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -2126,6 +2306,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ListSubscriptionsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -2190,6 +2383,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.DeleteSubscriptionRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_subscription"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2222,7 +2428,7 @@ class IncidentServiceClient(object):
             >>> response = client.create_incident_role_assignment(parent, incident_role_assignment)
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             incident_role_assignment (Union[dict, ~google.cloud.irm_v1alpha2.types.IncidentRoleAssignment]): Role assignment to create.
 
@@ -2265,6 +2471,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CreateIncidentRoleAssignmentRequest(
             parent=parent, incident_role_assignment=incident_role_assignment
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_incident_role_assignment"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2322,6 +2541,19 @@ class IncidentServiceClient(object):
             )
 
         request = incidents_service_pb2.DeleteIncidentRoleAssignmentRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_incident_role_assignment"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2359,7 +2591,7 @@ class IncidentServiceClient(object):
             ...         pass
 
         Args:
-            parent (str): Resource name of the incident, e.g.
+            parent (str): Resource name of the incident, for example,
                 "projects/{project_id}/incidents/{incident_id}".
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
@@ -2404,6 +2636,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ListIncidentRoleAssignmentsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -2485,6 +2730,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.RequestIncidentRoleHandoverRequest(
             name=name, new_assignee=new_assignee
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["request_incident_role_handover"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2557,6 +2815,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ConfirmIncidentRoleHandoverRequest(
             name=name, new_assignee=new_assignee
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["confirm_incident_role_handover"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2629,6 +2900,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.ForceIncidentRoleHandoverRequest(
             name=name, new_assignee=new_assignee
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["force_incident_role_handover"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -2701,6 +2985,19 @@ class IncidentServiceClient(object):
         request = incidents_service_pb2.CancelIncidentRoleHandoverRequest(
             name=name, new_assignee=new_assignee
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["cancel_incident_role_handover"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

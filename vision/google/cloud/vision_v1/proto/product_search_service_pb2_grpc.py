@@ -14,16 +14,18 @@ class ProductSearchStub(object):
     """Manages Products and ProductSets of reference images for use in product
   search. It uses the following resource model:
 
-  - The API has a collection of [ProductSet][google.cloud.vision.v1.ProductSet] resources, named
-  `projects/*/locations/*/productSets/*`, which acts as a way to put different
-  products into groups to limit identification.
+  - The API has a collection of [ProductSet][google.cloud.vision.v1.ProductSet]
+  resources, named `projects/*/locations/*/productSets/*`, which acts as a way
+  to put different products into groups to limit identification.
 
   In parallel,
 
-  - The API has a collection of [Product][google.cloud.vision.v1.Product] resources, named
+  - The API has a collection of [Product][google.cloud.vision.v1.Product]
+  resources, named
   `projects/*/locations/*/products/*`
 
-  - Each [Product][google.cloud.vision.v1.Product] has a collection of [ReferenceImage][google.cloud.vision.v1.ReferenceImage] resources, named
+  - Each [Product][google.cloud.vision.v1.Product] has a collection of
+  [ReferenceImage][google.cloud.vision.v1.ReferenceImage] resources, named
   `projects/*/locations/*/products/*/referenceImages/*`
   """
 
@@ -129,16 +131,18 @@ class ProductSearchServicer(object):
     """Manages Products and ProductSets of reference images for use in product
   search. It uses the following resource model:
 
-  - The API has a collection of [ProductSet][google.cloud.vision.v1.ProductSet] resources, named
-  `projects/*/locations/*/productSets/*`, which acts as a way to put different
-  products into groups to limit identification.
+  - The API has a collection of [ProductSet][google.cloud.vision.v1.ProductSet]
+  resources, named `projects/*/locations/*/productSets/*`, which acts as a way
+  to put different products into groups to limit identification.
 
   In parallel,
 
-  - The API has a collection of [Product][google.cloud.vision.v1.Product] resources, named
+  - The API has a collection of [Product][google.cloud.vision.v1.Product]
+  resources, named
   `projects/*/locations/*/products/*`
 
-  - Each [Product][google.cloud.vision.v1.Product] has a collection of [ReferenceImage][google.cloud.vision.v1.ReferenceImage] resources, named
+  - Each [Product][google.cloud.vision.v1.Product] has a collection of
+  [ReferenceImage][google.cloud.vision.v1.ReferenceImage] resources, named
   `projects/*/locations/*/products/*/referenceImages/*`
   """
 
@@ -196,10 +200,6 @@ class ProductSearchServicer(object):
     ProductSet are not deleted.
 
     The actual image files are not deleted from Google Cloud Storage.
-
-    Possible errors:
-
-    * Returns NOT_FOUND if the ProductSet does not exist.
     """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -268,10 +268,6 @@ class ProductSearchServicer(object):
     Metadata of the product and all its images will be deleted right away, but
     search queries against ProductSets containing the product may still work
     until all related caches are refreshed.
-
-    Possible errors:
-
-    * Returns NOT_FOUND if the product does not exist.
     """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -310,10 +306,6 @@ class ProductSearchServicer(object):
     caches are refreshed.
 
     The actual image files are not deleted from Google Cloud Storage.
-
-    Possible errors:
-
-    * Returns NOT_FOUND if the reference image does not exist.
     """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -359,10 +351,6 @@ class ProductSearchServicer(object):
 
     def RemoveProductFromProductSet(self, request, context):
         """Removes a Product from the specified ProductSet.
-
-    Possible errors:
-
-    * Returns NOT_FOUND If the Product is not found under the ProductSet.
     """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -385,8 +373,8 @@ class ProductSearchServicer(object):
         """Asynchronous API that imports a list of reference images to specified
     product sets based on a list of image information.
 
-    The [google.longrunning.Operation][google.longrunning.Operation] API can be used to keep track of the
-    progress and results of the request.
+    The [google.longrunning.Operation][google.longrunning.Operation] API can be
+    used to keep track of the progress and results of the request.
     `Operation.metadata` contains `BatchOperationMetadata`. (progress)
     `Operation.response` contains `ImportProductSetsResponse`. (results)
 

@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.devtools.clouderrorreporting.v1beta1 ErrorGroupService API."""
 
 import pkg_resources
@@ -22,6 +23,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.path_template
 import grpc
@@ -34,6 +36,7 @@ from google.cloud.errorreporting_v1beta1.gapic.transports import (
 from google.cloud.errorreporting_v1beta1.proto import common_pb2
 from google.cloud.errorreporting_v1beta1.proto import error_group_service_pb2
 from google.cloud.errorreporting_v1beta1.proto import error_group_service_pb2_grpc
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution(
     "google-cloud-error-reporting"
@@ -232,6 +235,19 @@ class ErrorGroupServiceClient(object):
             )
 
         request = error_group_service_pb2.GetGroupRequest(group_name=group_name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("group_name", group_name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_group"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -293,6 +309,19 @@ class ErrorGroupServiceClient(object):
             )
 
         request = error_group_service_pb2.UpdateGroupRequest(group=group)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("group.name", group.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_group"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

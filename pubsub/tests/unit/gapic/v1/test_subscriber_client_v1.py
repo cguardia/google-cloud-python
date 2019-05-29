@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Unit tests."""
 
 import mock
@@ -75,11 +76,13 @@ class TestSubscriberClient(object):
         topic_2 = "topic2-1139259102"
         ack_deadline_seconds = 2135351438
         retain_acked_messages = False
+        enable_message_ordering = True
         expected_response = {
             "name": name_2,
             "topic": topic_2,
             "ack_deadline_seconds": ack_deadline_seconds,
             "retain_acked_messages": retain_acked_messages,
+            "enable_message_ordering": enable_message_ordering,
         }
         expected_response = pubsub_pb2.Subscription(**expected_response)
 
@@ -123,11 +126,13 @@ class TestSubscriberClient(object):
         topic = "topic110546223"
         ack_deadline_seconds = 2135351438
         retain_acked_messages = False
+        enable_message_ordering = True
         expected_response = {
             "name": name,
             "topic": topic,
             "ack_deadline_seconds": ack_deadline_seconds,
             "retain_acked_messages": retain_acked_messages,
+            "enable_message_ordering": enable_message_ordering,
         }
         expected_response = pubsub_pb2.Subscription(**expected_response)
 
@@ -169,11 +174,13 @@ class TestSubscriberClient(object):
         topic = "topic110546223"
         ack_deadline_seconds_2 = 921632575
         retain_acked_messages = False
+        enable_message_ordering = True
         expected_response = {
             "name": name,
             "topic": topic,
             "ack_deadline_seconds": ack_deadline_seconds_2,
             "retain_acked_messages": retain_acked_messages,
+            "enable_message_ordering": enable_message_ordering,
         }
         expected_response = pubsub_pb2.Subscription(**expected_response)
 

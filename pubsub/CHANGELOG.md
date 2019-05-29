@@ -4,6 +4,52 @@
 
 [1]: https://pypi.org/project/google-cloud-pubsub/#history
 
+## 0.41.0
+
+05-15-2019 13:57 PDT
+
+
+### New Features
+- Add `kms_key_name` arg to `create_topic`; remove BETA warnings (via synth). ([#7936](https://github.com/googleapis/google-cloud-python/pull/7936))
+- Add message ordering (via synth). ([#7551](https://github.com/googleapis/google-cloud-python/pull/7551))
+
+### Implementation Changes
+- Propagate subscribe callback errors to main thread ([#7954](https://github.com/googleapis/google-cloud-python/pull/7954))
+- Fix pubsub Streaming Pull shutdown on RetryError ([#7863](https://github.com/googleapis/google-cloud-python/pull/7863))
+- Make PubSub subscriber Scheduler inherit from ABC ([#7690](https://github.com/googleapis/google-cloud-python/pull/7690))
+- Add routing header to method metadata (via synth). ([#7623](https://github.com/googleapis/google-cloud-python/pull/7623))
+
+### Internal / Testing Changes
+- Remove classifier for Python 3.4 for end-of-life. ([#7535](https://github.com/googleapis/google-cloud-python/pull/7535))
+- Add nox session `docs` (via synth). ([#7778](https://github.com/googleapis/google-cloud-python/pull/7778))
+- Pub/Sub (nit): wrong var name in sample ([#7705](https://github.com/googleapis/google-cloud-python/pull/7705))
+
+## 0.40.0
+
+03-15-2019 14:09 PDT
+
+
+### Implementation Changes
+- Propagate 'RetryError' in 'PublisherClient.publish'. ([#7071](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7071))
+- Protoc-generated serialization update.. ([#7091](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7091))
+
+### New Features
+- Add 'authentication_method' to 'PushConfig' (via synth). ([#7512](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7512))
+- Add protos as an artifact to library ([#7205](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7205))
+- Pub/sub: pass transport w/ custom channel to GAPIC API clients. ([#7008](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7008))
+
+### Dependencies
+
+### Documentation
+- Updated client library documentation URLs. ([#7307](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7307))
+- Update copyright headers
+- Fix broken docstring cross-reference links. ([#7132](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7132))
+- Docstring changes from updates to .proto files. ([#7054](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7054))
+- Pick up stub docstring fix in GAPIC generator. ([#6978](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/6978))
+
+### Internal / Testing Changes
+- Copy proto files alongside protoc versions.
+
 ## 0.39.1
 
 12-17-2018 16:57 PST

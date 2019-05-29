@@ -33,10 +33,11 @@ from google.cloud.storage import _signing
 from google.cloud.storage._helpers import _PropertyMixin
 from google.cloud.storage._helpers import _scalar_property
 from google.cloud.storage._helpers import _validate_name
+from google.cloud.storage._signing import generate_signed_url_v2
+from google.cloud.storage._signing import generate_signed_url_v4
 from google.cloud.storage.acl import BucketACL
 from google.cloud.storage.acl import DefaultObjectACL
 from google.cloud.storage.blob import Blob
-from google.cloud.storage.blob import _get_encryption_headers
 from google.cloud.storage.notification import BucketNotification
 from google.cloud.storage.notification import NONE_PAYLOAD_FORMAT
 
@@ -46,6 +47,7 @@ _LOCATION_SETTER_MESSAGE = (
     "valid before the bucket is created. Instead, pass the location "
     "to `Bucket.create`."
 )
+_API_ACCESS_ENDPOINT = "https://storage.googleapis.com"
 
 
 def _blobs_page_start(iterator, page, response):
@@ -435,7 +437,14 @@ class Bucket(_PropertyMixin):
         """
         return self._user_project
 
-    def blob(self, blob_name, chunk_size=None, encryption_key=None, kms_key_name=None):
+    def blob(
+        self,
+        blob_name,
+        chunk_size=None,
+        encryption_key=None,
+        kms_key_name=None,
+        generation=None,
+    ):
         """Factory constructor for blob object.
 
         .. note::
@@ -458,6 +467,10 @@ class Bucket(_PropertyMixin):
         :param kms_key_name:
             Optional resource name of KMS key used to encrypt blob's content.
 
+        :type generation: long
+        :param generation: Optional. If present, selects a specific revision of
+                           this object.
+
         :rtype: :class:`google.cloud.storage.blob.Blob`
         :returns: The blob object created.
         """
@@ -467,6 +480,7 @@ class Bucket(_PropertyMixin):
             chunk_size=chunk_size,
             encryption_key=encryption_key,
             kms_key_name=kms_key_name,
+            generation=generation,
         )
 
     def notification(
@@ -639,7 +653,9 @@ class Bucket(_PropertyMixin):
 
         return self.path_helper(self.name)
 
-    def get_blob(self, blob_name, client=None, encryption_key=None, **kwargs):
+    def get_blob(
+        self, blob_name, client=None, encryption_key=None, generation=None, **kwargs
+    ):
         """Get a blob object by name.
 
         This will return None if the blob doesn't exist:
@@ -664,6 +680,10 @@ class Bucket(_PropertyMixin):
             See
             https://cloud.google.com/storage/docs/encryption#customer-supplied.
 
+        :type generation: long
+        :param generation: Optional. If present, selects a specific revision of
+                           this object.
+
         :type kwargs: dict
         :param kwargs: Keyword arguments to pass to the
                        :class:`~google.cloud.storage.blob.Blob` constructor.
@@ -671,31 +691,22 @@ class Bucket(_PropertyMixin):
         :rtype: :class:`google.cloud.storage.blob.Blob` or None
         :returns: The blob object if it exists, otherwise None.
         """
-        client = self._require_client(client)
-        query_params = {}
-
-        if self.user_project is not None:
-            query_params["userProject"] = self.user_project
         blob = Blob(
-            bucket=self, name=blob_name, encryption_key=encryption_key, **kwargs
+            bucket=self,
+            name=blob_name,
+            encryption_key=encryption_key,
+            generation=generation,
+            **kwargs
         )
         try:
-            headers = _get_encryption_headers(encryption_key)
-            response = client._connection.api_request(
-                method="GET",
-                path=blob.path,
-                query_params=query_params,
-                headers=headers,
-                _target_object=blob,
-            )
-            # NOTE: We assume response.get('name') matches `blob_name`.
-            blob._set_properties(response)
             # NOTE: This will not fail immediately in a batch. However, when
             #       Batch.finish() is called, the resulting `NotFound` will be
             #       raised.
-            return blob
+            blob.reload(client=client)
         except NotFound:
             return None
+        else:
+            return blob
 
     def list_blobs(
         self,
@@ -743,11 +754,13 @@ class Bucket(_PropertyMixin):
                            properties to return.
 
         :type fields: str
-        :param fields: (Optional) Selector specifying which fields to include
-                       in a partial response. Must be a list of fields. For
-                       example to get a partial response with just the next
-                       page token and the language of each blob returned:
-                       ``'items/contentLanguage,nextPageToken'``.
+        :param fields:
+            (Optional) Selector specifying which fields to include
+            in a partial response. Must be a list of fields. For
+            example to get a partial response with just the next
+            page token and the name and language of each blob returned:
+            ``'items(name,contentLanguage),nextPageToken'``.
+            See: https://cloud.google.com/storage/docs/json_api/v1/parameters#fields
 
         :type client: :class:`~google.cloud.storage.client.Client`
         :param client: (Optional) The client to use.  If not passed, falls back
@@ -881,7 +894,7 @@ class Bucket(_PropertyMixin):
             _target_object=None,
         )
 
-    def delete_blob(self, blob_name, client=None):
+    def delete_blob(self, blob_name, client=None, generation=None):
         """Deletes a blob from the current bucket.
 
         If the blob isn't found (backend 404), raises a
@@ -903,6 +916,10 @@ class Bucket(_PropertyMixin):
         :param client: Optional. The client to use.  If not passed, falls back
                        to the ``client`` stored on the current bucket.
 
+        :type generation: long
+        :param generation: Optional. If present, permanently deletes a specific
+                           revision of this object.
+
         :raises: :class:`google.cloud.exceptions.NotFound` (to suppress
                  the exception, call ``delete_blobs``, passing a no-op
                  ``on_error`` callback, e.g.:
@@ -913,19 +930,15 @@ class Bucket(_PropertyMixin):
 
         """
         client = self._require_client(client)
-        query_params = {}
+        blob = Blob(blob_name, bucket=self, generation=generation)
 
-        if self.user_project is not None:
-            query_params["userProject"] = self.user_project
-
-        blob_path = Blob.path_helper(self.path, blob_name)
         # We intentionally pass `_target_object=None` since a DELETE
         # request has no response value (whether in a standard request or
         # in a batch request).
         client._connection.api_request(
             method="DELETE",
-            path=blob_path,
-            query_params=query_params,
+            path=blob.path,
+            query_params=blob._query_params,
             _target_object=None,
         )
 
@@ -1961,3 +1974,109 @@ class Bucket(_PropertyMixin):
             method="POST", path=path, query_params=query_params, _target_object=self
         )
         self._set_properties(api_response)
+
+    def generate_signed_url(
+        self,
+        expiration=None,
+        api_access_endpoint=_API_ACCESS_ENDPOINT,
+        method="GET",
+        headers=None,
+        query_parameters=None,
+        client=None,
+        credentials=None,
+        version=None,
+    ):
+        """Generates a signed URL for this bucket.
+
+        .. note::
+
+            If you are on Google Compute Engine, you can't generate a signed
+            URL using GCE service account. Follow `Issue 50`_ for updates on
+            this. If you'd like to be able to generate a signed URL from GCE,
+            you can use a standard service account from a JSON file rather
+            than a GCE service account.
+
+        .. _Issue 50: https://github.com/GoogleCloudPlatform/\
+                      google-auth-library-python/issues/50
+
+        If you have a bucket that you want to allow access to for a set
+        amount of time, you can use this method to generate a URL that
+        is only valid within a certain time period.
+
+        This is particularly useful if you don't want publicly
+        accessible buckets, but don't want to require users to explicitly
+        log in.
+
+        :type expiration: Union[Integer, datetime.datetime, datetime.timedelta]
+        :param expiration: Point in time when the signed URL should expire.
+
+        :type api_access_endpoint: str
+        :param api_access_endpoint: Optional URI base.
+
+        :type method: str
+        :param method: The HTTP verb that will be used when requesting the URL.
+
+        :type headers: dict
+        :param headers:
+            (Optional) Additional HTTP headers to be included as part of the
+            signed URLs.  See:
+            https://cloud.google.com/storage/docs/xml-api/reference-headers
+            Requests using the signed URL *must* pass the specified header
+            (name and value) with each request for the URL.
+
+        :type query_parameters: dict
+        :param query_parameters:
+            (Optional) Additional query paramtersto be included as part of the
+            signed URLs.  See:
+            https://cloud.google.com/storage/docs/xml-api/reference-headers#query
+
+        :type client: :class:`~google.cloud.storage.client.Client` or
+                      ``NoneType``
+        :param client: (Optional) The client to use.  If not passed, falls back
+                       to the ``client`` stored on the blob's bucket.
+
+
+        :type credentials: :class:`oauth2client.client.OAuth2Credentials` or
+                           :class:`NoneType`
+        :param credentials: (Optional) The OAuth2 credentials to use to sign
+                            the URL. Defaults to the credentials stored on the
+                            client used.
+
+        :type version: str
+        :param version: (Optional) The version of signed credential to create.
+                        Must be one of 'v2' | 'v4'.
+
+        :raises: :exc:`ValueError` when version is invalid.
+        :raises: :exc:`TypeError` when expiration is not a valid type.
+        :raises: :exc:`AttributeError` if credentials is not an instance
+                of :class:`google.auth.credentials.Signing`.
+
+        :rtype: str
+        :returns: A signed URL you can use to access the resource
+                  until expiration.
+        """
+        if version is None:
+            version = "v2"
+        elif version not in ("v2", "v4"):
+            raise ValueError("'version' must be either 'v2' or 'v4'")
+
+        resource = "/{bucket_name}".format(bucket_name=self.name)
+
+        if credentials is None:
+            client = self._require_client(client)
+            credentials = client._credentials
+
+        if version == "v2":
+            helper = generate_signed_url_v2
+        else:
+            helper = generate_signed_url_v4
+
+        return helper(
+            credentials,
+            resource=resource,
+            expiration=expiration,
+            api_access_endpoint=api_access_endpoint,
+            method=method.upper(),
+            headers=headers,
+            query_parameters=query_parameters,
+        )

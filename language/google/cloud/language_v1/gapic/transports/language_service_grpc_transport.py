@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import google.api_core.grpc_helpers
 
 from google.cloud.language_v1.proto import language_service_pb2_grpc
@@ -30,7 +31,10 @@ class LanguageServiceGrpcTransport(object):
 
     # The scopes needed to make gRPC calls to all of the methods defined
     # in this service.
-    _OAUTH_SCOPES = ("https://www.googleapis.com/auth/cloud-platform",)
+    _OAUTH_SCOPES = (
+        "https://www.googleapis.com/auth/cloud-language",
+        "https://www.googleapis.com/auth/cloud-platform",
+    )
 
     def __init__(
         self, channel=None, credentials=None, address="language.googleapis.com:443"

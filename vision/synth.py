@@ -19,7 +19,7 @@ from synthtool import gcp
 
 gapic = gcp.GAPICGenerator()
 common = gcp.CommonTemplates()
-versions = ["v1", "v1p1beta1", "v1p2beta1", "v1p3beta1"]
+versions = ["v1", "v1p1beta1", "v1p2beta1", "v1p3beta1", "v1p4beta1"]
 
 
 # ----------------------------------------------------------------------------
@@ -64,6 +64,9 @@ for version in versions:
         f"@add_single_feature_methods\n"
         f"class ImageAnnotatorClient(VisionHelpers, iac.ImageAnnotatorClient):",
     )
+
+# Move docs configuration
+s.move(library / f"docs/conf.py")
 
 # Fix import of operations
 targets = ["google/cloud/vision_*/**/*.py", "tests/system/gapic/*/**/*.py"]

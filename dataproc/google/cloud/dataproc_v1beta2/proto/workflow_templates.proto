@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC.
+// Copyright 2019 Google LLC.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ option go_package = "google.golang.org/genproto/googleapis/cloud/dataproc/v1beta
 option java_multiple_files = true;
 option java_outer_classname = "WorkflowTemplatesProto";
 option java_package = "com.google.cloud.dataproc.v1beta2";
-
 
 // The API interface for managing Workflow Templates in the
 // Cloud Dataproc API.
@@ -161,6 +160,8 @@ message WorkflowTemplate {
   // The id must contain only letters (a-z, A-Z), numbers (0-9),
   // underscores (_), and hyphens (-). Cannot begin or end with underscore
   // or hyphen. Must consist of between 3 and 50 characters.
+  //
+  // .
   string id = 2;
 
   // Output only. The "resource name" of the template, as described
@@ -345,7 +346,8 @@ message TemplateParameter {
   string name = 1;
 
   // Required. Paths to all fields that the parameter replaces.
-  // A field is allowed to appear in at most one parameter's list of field paths.
+  // A field is allowed to appear in at most one parameter's list of field
+  // paths.
   //
   // A field path is similar in syntax to a [google.protobuf.FieldMask][google.protobuf.FieldMask].
   // For example, a field path that references the zone field of a workflow
@@ -645,8 +647,8 @@ message ListWorkflowTemplatesResponse {
   // Output only. WorkflowTemplates list.
   repeated WorkflowTemplate templates = 1;
 
-  // Output only. This token is included in the response if there are more results
-  // to fetch. To fetch additional results, provide this value as the
+  // Output only. This token is included in the response if there are more
+  // results to fetch. To fetch additional results, provide this value as the
   // page_token in a subsequent <code>ListWorkflowTemplatesRequest</code>.
   string next_page_token = 2;
 }

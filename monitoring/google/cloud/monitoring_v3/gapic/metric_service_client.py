@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.monitoring.v3 MetricService API."""
 
 import functools
@@ -23,6 +24,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.page_iterator
 import google.api_core.path_template
@@ -45,6 +47,7 @@ from google.cloud.monitoring_v3.proto import metric_service_pb2
 from google.cloud.monitoring_v3.proto import metric_service_pb2_grpc
 from google.protobuf import empty_pb2
 from google.protobuf import field_mask_pb2
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution(
     "google-cloud-monitoring"
@@ -85,13 +88,6 @@ class MetricServiceClient(object):
     from_service_account_json = from_service_account_file
 
     @classmethod
-    def project_path(cls, project):
-        """Return a fully-qualified project string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}", project=project
-        )
-
-    @classmethod
     def metric_descriptor_path(cls, project, metric_descriptor):
         """Return a fully-qualified metric_descriptor string."""
         return google.api_core.path_template.expand(
@@ -107,6 +103,13 @@ class MetricServiceClient(object):
             "projects/{project}/monitoredResourceDescriptors/{monitored_resource_descriptor}",
             project=project,
             monitored_resource_descriptor=monitored_resource_descriptor,
+        )
+
+    @classmethod
+    def project_path(cls, project):
+        """Return a fully-qualified project string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}", project=project
         )
 
     def __init__(
@@ -218,7 +221,8 @@ class MetricServiceClient(object):
         metadata=None,
     ):
         """
-        Lists monitored resource descriptors that match a filter. This method does not require a Stackdriver account.
+        Lists monitored resource descriptors that match a filter. This method does
+        not require a Stackdriver account.
 
         Example:
             >>> from google.cloud import monitoring_v3
@@ -301,6 +305,19 @@ class MetricServiceClient(object):
         request = metric_service_pb2.ListMonitoredResourceDescriptorsRequest(
             name=name, filter=filter_, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -324,7 +341,8 @@ class MetricServiceClient(object):
         metadata=None,
     ):
         """
-        Gets a single monitored resource descriptor. This method does not require a Stackdriver account.
+        Gets a single monitored resource descriptor. This method does not require a
+        Stackdriver account.
 
         Example:
             >>> from google.cloud import monitoring_v3
@@ -378,6 +396,19 @@ class MetricServiceClient(object):
             )
 
         request = metric_service_pb2.GetMonitoredResourceDescriptorRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_monitored_resource_descriptor"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -392,7 +423,8 @@ class MetricServiceClient(object):
         metadata=None,
     ):
         """
-        Lists metric descriptors that match a filter. This method does not require a Stackdriver account.
+        Lists metric descriptors that match a filter. This method does not require
+        a Stackdriver account.
 
         Example:
             >>> from google.cloud import monitoring_v3
@@ -472,6 +504,19 @@ class MetricServiceClient(object):
         request = metric_service_pb2.ListMetricDescriptorsRequest(
             name=name, filter=filter_, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -495,7 +540,8 @@ class MetricServiceClient(object):
         metadata=None,
     ):
         """
-        Gets a single metric descriptor. This method does not require a Stackdriver account.
+        Gets a single metric descriptor. This method does not require a Stackdriver
+        account.
 
         Example:
             >>> from google.cloud import monitoring_v3
@@ -545,6 +591,19 @@ class MetricServiceClient(object):
             )
 
         request = metric_service_pb2.GetMetricDescriptorRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_metric_descriptor"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -618,6 +677,19 @@ class MetricServiceClient(object):
         request = metric_service_pb2.CreateMetricDescriptorRequest(
             name=name, metric_descriptor=metric_descriptor
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_metric_descriptor"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -679,6 +751,19 @@ class MetricServiceClient(object):
             )
 
         request = metric_service_pb2.DeleteMetricDescriptorRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_metric_descriptor"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -697,7 +782,8 @@ class MetricServiceClient(object):
         metadata=None,
     ):
         """
-        Lists time series that match a filter. This method does not require a Stackdriver account.
+        Lists time series that match a filter. This method does not require a
+        Stackdriver account.
 
         Example:
             >>> from google.cloud import monitoring_v3
@@ -808,6 +894,19 @@ class MetricServiceClient(object):
             order_by=order_by,
             page_size=page_size,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -893,6 +992,19 @@ class MetricServiceClient(object):
         request = metric_service_pb2.CreateTimeSeriesRequest(
             name=name, time_series=time_series
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["create_time_series"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

@@ -23,6 +23,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.operation
 from google.api_core import operations_v1
@@ -33,6 +34,8 @@ import grpc
 from google.cloud.vision_v1.gapic import enums
 from google.cloud.vision_v1.gapic import product_search_client_config
 from google.cloud.vision_v1.gapic.transports import product_search_grpc_transport
+from google.cloud.vision_v1.proto import image_annotator_pb2
+from google.cloud.vision_v1.proto import image_annotator_pb2_grpc
 from google.cloud.vision_v1.proto import product_search_service_pb2
 from google.cloud.vision_v1.proto import product_search_service_pb2_grpc
 from google.longrunning import operations_pb2
@@ -97,16 +100,6 @@ class ProductSearchClient(object):
         )
 
     @classmethod
-    def product_set_path(cls, project, location, product_set):
-        """Return a fully-qualified product_set string."""
-        return google.api_core.path_template.expand(
-            "projects/{project}/locations/{location}/productSets/{product_set}",
-            project=project,
-            location=location,
-            product_set=product_set,
-        )
-
-    @classmethod
     def product_path(cls, project, location, product):
         """Return a fully-qualified product string."""
         return google.api_core.path_template.expand(
@@ -114,6 +107,16 @@ class ProductSearchClient(object):
             project=project,
             location=location,
             product=product,
+        )
+
+    @classmethod
+    def product_set_path(cls, project, location, product_set):
+        """Return a fully-qualified product_set string."""
+        return google.api_core.path_template.expand(
+            "projects/{project}/locations/{location}/productSets/{product_set}",
+            project=project,
+            location=location,
+            product_set=product_set,
         )
 
     @classmethod
@@ -226,6 +229,444 @@ class ProductSearchClient(object):
         self._inner_api_calls = {}
 
     # Service calls
+    def create_product_set(
+        self,
+        parent,
+        product_set,
+        product_set_id=None,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Creates and returns a new ProductSet resource.
+
+        Possible errors:
+
+        -  Returns INVALID\_ARGUMENT if display\_name is missing, or is longer
+           than 4096 characters.
+
+        Example:
+            >>> from google.cloud import vision_v1
+            >>>
+            >>> client = vision_v1.ProductSearchClient()
+            >>>
+            >>> parent = client.location_path('[PROJECT]', '[LOCATION]')
+            >>>
+            >>> # TODO: Initialize `product_set`:
+            >>> product_set = {}
+            >>>
+            >>> response = client.create_product_set(parent, product_set)
+
+        Args:
+            parent (str): The project in which the ProductSet should be created.
+
+                Format is ``projects/PROJECT_ID/locations/LOC_ID``.
+            product_set (Union[dict, ~google.cloud.vision_v1.types.ProductSet]): The ProductSet to create.
+
+                If a dict is provided, it must be of the same form as the protobuf
+                message :class:`~google.cloud.vision_v1.types.ProductSet`
+            product_set_id (str): A user-supplied resource id for this ProductSet. If set, the server will
+                attempt to use this value as the resource id. If it is already in use,
+                an error is returned with code ALREADY\_EXISTS. Must be at most 128
+                characters long. It cannot contain the character ``/``.
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Returns:
+            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "create_product_set" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "create_product_set"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.create_product_set,
+                default_retry=self._method_configs["CreateProductSet"].retry,
+                default_timeout=self._method_configs["CreateProductSet"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = product_search_service_pb2.CreateProductSetRequest(
+            parent=parent, product_set=product_set, product_set_id=product_set_id
+        )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        return self._inner_api_calls["create_product_set"](
+            request, retry=retry, timeout=timeout, metadata=metadata
+        )
+
+    def list_product_sets(
+        self,
+        parent,
+        page_size=None,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Lists ProductSets in an unspecified order.
+
+        Possible errors:
+
+        -  Returns INVALID\_ARGUMENT if page\_size is greater than 100, or less
+           than 1.
+
+        Example:
+            >>> from google.cloud import vision_v1
+            >>>
+            >>> client = vision_v1.ProductSearchClient()
+            >>>
+            >>> parent = client.location_path('[PROJECT]', '[LOCATION]')
+            >>>
+            >>> # Iterate over all results
+            >>> for element in client.list_product_sets(parent):
+            ...     # process element
+            ...     pass
+            >>>
+            >>>
+            >>> # Alternatively:
+            >>>
+            >>> # Iterate over results one page at a time
+            >>> for page in client.list_product_sets(parent).pages:
+            ...     for element in page:
+            ...         # process element
+            ...         pass
+
+        Args:
+            parent (str): The project from which ProductSets should be listed.
+
+                Format is ``projects/PROJECT_ID/locations/LOC_ID``.
+            page_size (int): The maximum number of resources contained in the
+                underlying API response. If page streaming is performed per-
+                resource, this parameter does not affect the return value. If page
+                streaming is performed per-page, this determines the maximum number
+                of resources in a page.
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Returns:
+            A :class:`~google.gax.PageIterator` instance. By default, this
+            is an iterable of :class:`~google.cloud.vision_v1.types.ProductSet` instances.
+            This object can also be configured to iterate over the pages
+            of the response through the `options` parameter.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "list_product_sets" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "list_product_sets"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.list_product_sets,
+                default_retry=self._method_configs["ListProductSets"].retry,
+                default_timeout=self._method_configs["ListProductSets"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = product_search_service_pb2.ListProductSetsRequest(
+            parent=parent, page_size=page_size
+        )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        iterator = google.api_core.page_iterator.GRPCIterator(
+            client=None,
+            method=functools.partial(
+                self._inner_api_calls["list_product_sets"],
+                retry=retry,
+                timeout=timeout,
+                metadata=metadata,
+            ),
+            request=request,
+            items_field="product_sets",
+            request_token_field="page_token",
+            response_token_field="next_page_token",
+        )
+        return iterator
+
+    def get_product_set(
+        self,
+        name,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Gets information associated with a ProductSet.
+
+        Possible errors:
+
+        -  Returns NOT\_FOUND if the ProductSet does not exist.
+
+        Example:
+            >>> from google.cloud import vision_v1
+            >>>
+            >>> client = vision_v1.ProductSearchClient()
+            >>>
+            >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
+            >>>
+            >>> response = client.get_product_set(name)
+
+        Args:
+            name (str): Resource name of the ProductSet to get.
+
+                Format is:
+                ``projects/PROJECT_ID/locations/LOG_ID/productSets/PRODUCT_SET_ID``
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Returns:
+            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "get_product_set" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "get_product_set"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.get_product_set,
+                default_retry=self._method_configs["GetProductSet"].retry,
+                default_timeout=self._method_configs["GetProductSet"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = product_search_service_pb2.GetProductSetRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        return self._inner_api_calls["get_product_set"](
+            request, retry=retry, timeout=timeout, metadata=metadata
+        )
+
+    def update_product_set(
+        self,
+        product_set,
+        update_mask=None,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Makes changes to a ProductSet resource. Only display\_name can be
+        updated currently.
+
+        Possible errors:
+
+        -  Returns NOT\_FOUND if the ProductSet does not exist.
+        -  Returns INVALID\_ARGUMENT if display\_name is present in update\_mask
+           but missing from the request or longer than 4096 characters.
+
+        Example:
+            >>> from google.cloud import vision_v1
+            >>>
+            >>> client = vision_v1.ProductSearchClient()
+            >>>
+            >>> # TODO: Initialize `product_set`:
+            >>> product_set = {}
+            >>>
+            >>> response = client.update_product_set(product_set)
+
+        Args:
+            product_set (Union[dict, ~google.cloud.vision_v1.types.ProductSet]): The ProductSet resource which replaces the one on the server.
+
+                If a dict is provided, it must be of the same form as the protobuf
+                message :class:`~google.cloud.vision_v1.types.ProductSet`
+            update_mask (Union[dict, ~google.cloud.vision_v1.types.FieldMask]): The ``FieldMask`` that specifies which fields to update. If update\_mask
+                isn't specified, all mutable fields are to be updated. Valid mask path
+                is ``display_name``.
+
+                If a dict is provided, it must be of the same form as the protobuf
+                message :class:`~google.cloud.vision_v1.types.FieldMask`
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Returns:
+            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "update_product_set" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "update_product_set"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.update_product_set,
+                default_retry=self._method_configs["UpdateProductSet"].retry,
+                default_timeout=self._method_configs["UpdateProductSet"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = product_search_service_pb2.UpdateProductSetRequest(
+            product_set=product_set, update_mask=update_mask
+        )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("product_set.name", product_set.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        return self._inner_api_calls["update_product_set"](
+            request, retry=retry, timeout=timeout, metadata=metadata
+        )
+
+    def delete_product_set(
+        self,
+        name,
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        metadata=None,
+    ):
+        """
+        Permanently deletes a ProductSet. Products and ReferenceImages in the
+        ProductSet are not deleted.
+
+        The actual image files are not deleted from Google Cloud Storage.
+
+        Example:
+            >>> from google.cloud import vision_v1
+            >>>
+            >>> client = vision_v1.ProductSearchClient()
+            >>>
+            >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
+            >>>
+            >>> client.delete_product_set(name)
+
+        Args:
+            name (str): Resource name of the ProductSet to delete.
+
+                Format is:
+                ``projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID``
+            retry (Optional[google.api_core.retry.Retry]):  A retry object used
+                to retry requests. If ``None`` is specified, requests will not
+                be retried.
+            timeout (Optional[float]): The amount of time, in seconds, to wait
+                for the request to complete. Note that if ``retry`` is
+                specified, the timeout applies to each individual attempt.
+            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
+                that is provided to the method.
+
+        Raises:
+            google.api_core.exceptions.GoogleAPICallError: If the request
+                    failed for any reason.
+            google.api_core.exceptions.RetryError: If the request failed due
+                    to a retryable error and retry attempts failed.
+            ValueError: If the parameters are invalid.
+        """
+        # Wrap the transport method to add retry and timeout logic.
+        if "delete_product_set" not in self._inner_api_calls:
+            self._inner_api_calls[
+                "delete_product_set"
+            ] = google.api_core.gapic_v1.method.wrap_method(
+                self.transport.delete_product_set,
+                default_retry=self._method_configs["DeleteProductSet"].retry,
+                default_timeout=self._method_configs["DeleteProductSet"].timeout,
+                client_info=self._client_info,
+            )
+
+        request = product_search_service_pb2.DeleteProductSetRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        self._inner_api_calls["delete_product_set"](
+            request, retry=retry, timeout=timeout, metadata=metadata
+        )
+
     def create_product(
         self,
         parent,
@@ -303,6 +744,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.CreateProductRequest(
             parent=parent, product=product, product_id=product_id
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_product"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -389,6 +843,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.ListProductsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -462,6 +929,19 @@ class ProductSearchClient(object):
             )
 
         request = product_search_service_pb2.GetProductRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_product"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -546,6 +1026,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.UpdateProductRequest(
             product=product, update_mask=update_mask
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("product.name", product.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_product"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -560,13 +1053,9 @@ class ProductSearchClient(object):
         """
         Permanently deletes a product and its reference images.
 
-        Metadata of the product and all its images will be deleted right away,
-        but search queries against ProductSets containing the product may still
-        work until all related caches are refreshed.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the product does not exist.
+        Metadata of the product and all its images will be deleted right away, but
+        search queries against ProductSets containing the product may still work
+        until all related caches are refreshed.
 
         Example:
             >>> from google.cloud import vision_v1
@@ -609,236 +1098,20 @@ class ProductSearchClient(object):
             )
 
         request = product_search_service_pb2.DeleteProductRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_product"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def list_reference_images(
-        self,
-        parent,
-        page_size=None,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Lists reference images.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the parent product does not exist.
-        -  Returns INVALID\_ARGUMENT if the page\_size is greater than 100, or
-           less than 1.
-
-        Example:
-            >>> from google.cloud import vision_v1
-            >>>
-            >>> client = vision_v1.ProductSearchClient()
-            >>>
-            >>> parent = client.product_path('[PROJECT]', '[LOCATION]', '[PRODUCT]')
-            >>>
-            >>> # Iterate over all results
-            >>> for element in client.list_reference_images(parent):
-            ...     # process element
-            ...     pass
-            >>>
-            >>>
-            >>> # Alternatively:
-            >>>
-            >>> # Iterate over results one page at a time
-            >>> for page in client.list_reference_images(parent).pages:
-            ...     for element in page:
-            ...         # process element
-            ...         pass
-
-        Args:
-            parent (str): Resource name of the product containing the reference images.
-
-                Format is ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID``.
-            page_size (int): The maximum number of resources contained in the
-                underlying API response. If page streaming is performed per-
-                resource, this parameter does not affect the return value. If page
-                streaming is performed per-page, this determines the maximum number
-                of resources in a page.
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.gax.PageIterator` instance. By default, this
-            is an iterable of :class:`~google.cloud.vision_v1.types.ReferenceImage` instances.
-            This object can also be configured to iterate over the pages
-            of the response through the `options` parameter.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "list_reference_images" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "list_reference_images"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.list_reference_images,
-                default_retry=self._method_configs["ListReferenceImages"].retry,
-                default_timeout=self._method_configs["ListReferenceImages"].timeout,
-                client_info=self._client_info,
-            )
-
-        request = product_search_service_pb2.ListReferenceImagesRequest(
-            parent=parent, page_size=page_size
-        )
-        iterator = google.api_core.page_iterator.GRPCIterator(
-            client=None,
-            method=functools.partial(
-                self._inner_api_calls["list_reference_images"],
-                retry=retry,
-                timeout=timeout,
-                metadata=metadata,
-            ),
-            request=request,
-            items_field="reference_images",
-            request_token_field="page_token",
-            response_token_field="next_page_token",
-        )
-        return iterator
-
-    def get_reference_image(
-        self,
-        name,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Gets information associated with a ReferenceImage.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the specified image does not exist.
-
-        Example:
-            >>> from google.cloud import vision_v1
-            >>>
-            >>> client = vision_v1.ProductSearchClient()
-            >>>
-            >>> name = client.reference_image_path('[PROJECT]', '[LOCATION]', '[PRODUCT]', '[REFERENCE_IMAGE]')
-            >>>
-            >>> response = client.get_reference_image(name)
-
-        Args:
-            name (str): The resource name of the ReferenceImage to get.
-
-                Format is:
-
-                ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID``.
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.cloud.vision_v1.types.ReferenceImage` instance.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "get_reference_image" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "get_reference_image"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.get_reference_image,
-                default_retry=self._method_configs["GetReferenceImage"].retry,
-                default_timeout=self._method_configs["GetReferenceImage"].timeout,
-                client_info=self._client_info,
-            )
-
-        request = product_search_service_pb2.GetReferenceImageRequest(name=name)
-        return self._inner_api_calls["get_reference_image"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def delete_reference_image(
-        self,
-        name,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Permanently deletes a reference image.
-
-        The image metadata will be deleted right away, but search queries
-        against ProductSets containing the image may still work until all
-        related caches are refreshed.
-
-        The actual image files are not deleted from Google Cloud Storage.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the reference image does not exist.
-
-        Example:
-            >>> from google.cloud import vision_v1
-            >>>
-            >>> client = vision_v1.ProductSearchClient()
-            >>>
-            >>> name = client.reference_image_path('[PROJECT]', '[LOCATION]', '[PRODUCT]', '[REFERENCE_IMAGE]')
-            >>>
-            >>> client.delete_reference_image(name)
-
-        Args:
-            name (str): The resource name of the reference image to delete.
-
-                Format is:
-
-                ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID``
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "delete_reference_image" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "delete_reference_image"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.delete_reference_image,
-                default_retry=self._method_configs["DeleteReferenceImage"].retry,
-                default_timeout=self._method_configs["DeleteReferenceImage"].timeout,
-                client_info=self._client_info,
-            )
-
-        request = product_search_service_pb2.DeleteReferenceImageRequest(name=name)
-        self._inner_api_calls["delete_reference_image"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
@@ -934,51 +1207,54 @@ class ProductSearchClient(object):
             reference_image=reference_image,
             reference_image_id=reference_image_id,
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_reference_image"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
-    def create_product_set(
+    def delete_reference_image(
         self,
-        parent,
-        product_set,
-        product_set_id=None,
+        name,
         retry=google.api_core.gapic_v1.method.DEFAULT,
         timeout=google.api_core.gapic_v1.method.DEFAULT,
         metadata=None,
     ):
         """
-        Creates and returns a new ProductSet resource.
+        Permanently deletes a reference image.
 
-        Possible errors:
+        The image metadata will be deleted right away, but search queries
+        against ProductSets containing the image may still work until all related
+        caches are refreshed.
 
-        -  Returns INVALID\_ARGUMENT if display\_name is missing, or is longer
-           than 4096 characters.
+        The actual image files are not deleted from Google Cloud Storage.
 
         Example:
             >>> from google.cloud import vision_v1
             >>>
             >>> client = vision_v1.ProductSearchClient()
             >>>
-            >>> parent = client.location_path('[PROJECT]', '[LOCATION]')
+            >>> name = client.reference_image_path('[PROJECT]', '[LOCATION]', '[PRODUCT]', '[REFERENCE_IMAGE]')
             >>>
-            >>> # TODO: Initialize `product_set`:
-            >>> product_set = {}
-            >>>
-            >>> response = client.create_product_set(parent, product_set)
+            >>> client.delete_reference_image(name)
 
         Args:
-            parent (str): The project in which the ProductSet should be created.
+            name (str): The resource name of the reference image to delete.
 
-                Format is ``projects/PROJECT_ID/locations/LOC_ID``.
-            product_set (Union[dict, ~google.cloud.vision_v1.types.ProductSet]): The ProductSet to create.
+                Format is:
 
-                If a dict is provided, it must be of the same form as the protobuf
-                message :class:`~google.cloud.vision_v1.types.ProductSet`
-            product_set_id (str): A user-supplied resource id for this ProductSet. If set, the server will
-                attempt to use this value as the resource id. If it is already in use,
-                an error is returned with code ALREADY\_EXISTS. Must be at most 128
-                characters long. It cannot contain the character ``/``.
+                ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID``
             retry (Optional[google.api_core.retry.Retry]):  A retry object used
                 to retry requests. If ``None`` is specified, requests will not
                 be retried.
@@ -988,9 +1264,6 @@ class ProductSearchClient(object):
             metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
                 that is provided to the method.
 
-        Returns:
-            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
-
         Raises:
             google.api_core.exceptions.GoogleAPICallError: If the request
                     failed for any reason.
@@ -999,24 +1272,35 @@ class ProductSearchClient(object):
             ValueError: If the parameters are invalid.
         """
         # Wrap the transport method to add retry and timeout logic.
-        if "create_product_set" not in self._inner_api_calls:
+        if "delete_reference_image" not in self._inner_api_calls:
             self._inner_api_calls[
-                "create_product_set"
+                "delete_reference_image"
             ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.create_product_set,
-                default_retry=self._method_configs["CreateProductSet"].retry,
-                default_timeout=self._method_configs["CreateProductSet"].timeout,
+                self.transport.delete_reference_image,
+                default_retry=self._method_configs["DeleteReferenceImage"].retry,
+                default_timeout=self._method_configs["DeleteReferenceImage"].timeout,
                 client_info=self._client_info,
             )
 
-        request = product_search_service_pb2.CreateProductSetRequest(
-            parent=parent, product_set=product_set, product_set_id=product_set_id
-        )
-        return self._inner_api_calls["create_product_set"](
+        request = product_search_service_pb2.DeleteReferenceImageRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
+        self._inner_api_calls["delete_reference_image"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
-    def list_product_sets(
+    def list_reference_images(
         self,
         parent,
         page_size=None,
@@ -1025,22 +1309,23 @@ class ProductSearchClient(object):
         metadata=None,
     ):
         """
-        Lists ProductSets in an unspecified order.
+        Lists reference images.
 
         Possible errors:
 
-        -  Returns INVALID\_ARGUMENT if page\_size is greater than 100, or less
-           than 1.
+        -  Returns NOT\_FOUND if the parent product does not exist.
+        -  Returns INVALID\_ARGUMENT if the page\_size is greater than 100, or
+           less than 1.
 
         Example:
             >>> from google.cloud import vision_v1
             >>>
             >>> client = vision_v1.ProductSearchClient()
             >>>
-            >>> parent = client.location_path('[PROJECT]', '[LOCATION]')
+            >>> parent = client.product_path('[PROJECT]', '[LOCATION]', '[PRODUCT]')
             >>>
             >>> # Iterate over all results
-            >>> for element in client.list_product_sets(parent):
+            >>> for element in client.list_reference_images(parent):
             ...     # process element
             ...     pass
             >>>
@@ -1048,15 +1333,15 @@ class ProductSearchClient(object):
             >>> # Alternatively:
             >>>
             >>> # Iterate over results one page at a time
-            >>> for page in client.list_product_sets(parent).pages:
+            >>> for page in client.list_reference_images(parent).pages:
             ...     for element in page:
             ...         # process element
             ...         pass
 
         Args:
-            parent (str): The project from which ProductSets should be listed.
+            parent (str): Resource name of the product containing the reference images.
 
-                Format is ``projects/PROJECT_ID/locations/LOC_ID``.
+                Format is ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID``.
             page_size (int): The maximum number of resources contained in the
                 underlying API response. If page streaming is performed per-
                 resource, this parameter does not affect the return value. If page
@@ -1073,7 +1358,7 @@ class ProductSearchClient(object):
 
         Returns:
             A :class:`~google.gax.PageIterator` instance. By default, this
-            is an iterable of :class:`~google.cloud.vision_v1.types.ProductSet` instances.
+            is an iterable of :class:`~google.cloud.vision_v1.types.ReferenceImage` instances.
             This object can also be configured to iterate over the pages
             of the response through the `options` parameter.
 
@@ -1085,35 +1370,48 @@ class ProductSearchClient(object):
             ValueError: If the parameters are invalid.
         """
         # Wrap the transport method to add retry and timeout logic.
-        if "list_product_sets" not in self._inner_api_calls:
+        if "list_reference_images" not in self._inner_api_calls:
             self._inner_api_calls[
-                "list_product_sets"
+                "list_reference_images"
             ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.list_product_sets,
-                default_retry=self._method_configs["ListProductSets"].retry,
-                default_timeout=self._method_configs["ListProductSets"].timeout,
+                self.transport.list_reference_images,
+                default_retry=self._method_configs["ListReferenceImages"].retry,
+                default_timeout=self._method_configs["ListReferenceImages"].timeout,
                 client_info=self._client_info,
             )
 
-        request = product_search_service_pb2.ListProductSetsRequest(
+        request = product_search_service_pb2.ListReferenceImagesRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
-                self._inner_api_calls["list_product_sets"],
+                self._inner_api_calls["list_reference_images"],
                 retry=retry,
                 timeout=timeout,
                 metadata=metadata,
             ),
             request=request,
-            items_field="product_sets",
+            items_field="reference_images",
             request_token_field="page_token",
             response_token_field="next_page_token",
         )
         return iterator
 
-    def get_product_set(
+    def get_reference_image(
         self,
         name,
         retry=google.api_core.gapic_v1.method.DEFAULT,
@@ -1121,26 +1419,27 @@ class ProductSearchClient(object):
         metadata=None,
     ):
         """
-        Gets information associated with a ProductSet.
+        Gets information associated with a ReferenceImage.
 
         Possible errors:
 
-        -  Returns NOT\_FOUND if the ProductSet does not exist.
+        -  Returns NOT\_FOUND if the specified image does not exist.
 
         Example:
             >>> from google.cloud import vision_v1
             >>>
             >>> client = vision_v1.ProductSearchClient()
             >>>
-            >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
+            >>> name = client.reference_image_path('[PROJECT]', '[LOCATION]', '[PRODUCT]', '[REFERENCE_IMAGE]')
             >>>
-            >>> response = client.get_product_set(name)
+            >>> response = client.get_reference_image(name)
 
         Args:
-            name (str): Resource name of the ProductSet to get.
+            name (str): The resource name of the ReferenceImage to get.
 
                 Format is:
-                ``projects/PROJECT_ID/locations/LOG_ID/productSets/PRODUCT_SET_ID``
+
+                ``projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID``.
             retry (Optional[google.api_core.retry.Retry]):  A retry object used
                 to retry requests. If ``None`` is specified, requests will not
                 be retried.
@@ -1151,7 +1450,7 @@ class ProductSearchClient(object):
                 that is provided to the method.
 
         Returns:
-            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
+            A :class:`~google.cloud.vision_v1.types.ReferenceImage` instance.
 
         Raises:
             google.api_core.exceptions.GoogleAPICallError: If the request
@@ -1161,157 +1460,31 @@ class ProductSearchClient(object):
             ValueError: If the parameters are invalid.
         """
         # Wrap the transport method to add retry and timeout logic.
-        if "get_product_set" not in self._inner_api_calls:
+        if "get_reference_image" not in self._inner_api_calls:
             self._inner_api_calls[
-                "get_product_set"
+                "get_reference_image"
             ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.get_product_set,
-                default_retry=self._method_configs["GetProductSet"].retry,
-                default_timeout=self._method_configs["GetProductSet"].timeout,
+                self.transport.get_reference_image,
+                default_retry=self._method_configs["GetReferenceImage"].retry,
+                default_timeout=self._method_configs["GetReferenceImage"].timeout,
                 client_info=self._client_info,
             )
 
-        request = product_search_service_pb2.GetProductSetRequest(name=name)
-        return self._inner_api_calls["get_product_set"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def update_product_set(
-        self,
-        product_set,
-        update_mask=None,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Makes changes to a ProductSet resource. Only display\_name can be
-        updated currently.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the ProductSet does not exist.
-        -  Returns INVALID\_ARGUMENT if display\_name is present in update\_mask
-           but missing from the request or longer than 4096 characters.
-
-        Example:
-            >>> from google.cloud import vision_v1
-            >>>
-            >>> client = vision_v1.ProductSearchClient()
-            >>>
-            >>> # TODO: Initialize `product_set`:
-            >>> product_set = {}
-            >>>
-            >>> response = client.update_product_set(product_set)
-
-        Args:
-            product_set (Union[dict, ~google.cloud.vision_v1.types.ProductSet]): The ProductSet resource which replaces the one on the server.
-
-                If a dict is provided, it must be of the same form as the protobuf
-                message :class:`~google.cloud.vision_v1.types.ProductSet`
-            update_mask (Union[dict, ~google.cloud.vision_v1.types.FieldMask]): The ``FieldMask`` that specifies which fields to update. If update\_mask
-                isn't specified, all mutable fields are to be updated. Valid mask path
-                is ``display_name``.
-
-                If a dict is provided, it must be of the same form as the protobuf
-                message :class:`~google.cloud.vision_v1.types.FieldMask`
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Returns:
-            A :class:`~google.cloud.vision_v1.types.ProductSet` instance.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "update_product_set" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "update_product_set"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.update_product_set,
-                default_retry=self._method_configs["UpdateProductSet"].retry,
-                default_timeout=self._method_configs["UpdateProductSet"].timeout,
-                client_info=self._client_info,
+        request = product_search_service_pb2.GetReferenceImageRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
             )
+            metadata.append(routing_metadata)
 
-        request = product_search_service_pb2.UpdateProductSetRequest(
-            product_set=product_set, update_mask=update_mask
-        )
-        return self._inner_api_calls["update_product_set"](
-            request, retry=retry, timeout=timeout, metadata=metadata
-        )
-
-    def delete_product_set(
-        self,
-        name,
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
-        metadata=None,
-    ):
-        """
-        Permanently deletes a ProductSet. Products and ReferenceImages in the
-        ProductSet are not deleted.
-
-        The actual image files are not deleted from Google Cloud Storage.
-
-        Possible errors:
-
-        -  Returns NOT\_FOUND if the ProductSet does not exist.
-
-        Example:
-            >>> from google.cloud import vision_v1
-            >>>
-            >>> client = vision_v1.ProductSearchClient()
-            >>>
-            >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
-            >>>
-            >>> client.delete_product_set(name)
-
-        Args:
-            name (str): Resource name of the ProductSet to delete.
-
-                Format is:
-                ``projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID``
-            retry (Optional[google.api_core.retry.Retry]):  A retry object used
-                to retry requests. If ``None`` is specified, requests will not
-                be retried.
-            timeout (Optional[float]): The amount of time, in seconds, to wait
-                for the request to complete. Note that if ``retry`` is
-                specified, the timeout applies to each individual attempt.
-            metadata (Optional[Sequence[Tuple[str, str]]]): Additional metadata
-                that is provided to the method.
-
-        Raises:
-            google.api_core.exceptions.GoogleAPICallError: If the request
-                    failed for any reason.
-            google.api_core.exceptions.RetryError: If the request failed due
-                    to a retryable error and retry attempts failed.
-            ValueError: If the parameters are invalid.
-        """
-        # Wrap the transport method to add retry and timeout logic.
-        if "delete_product_set" not in self._inner_api_calls:
-            self._inner_api_calls[
-                "delete_product_set"
-            ] = google.api_core.gapic_v1.method.wrap_method(
-                self.transport.delete_product_set,
-                default_retry=self._method_configs["DeleteProductSet"].retry,
-                default_timeout=self._method_configs["DeleteProductSet"].timeout,
-                client_info=self._client_info,
-            )
-
-        request = product_search_service_pb2.DeleteProductSetRequest(name=name)
-        self._inner_api_calls["delete_product_set"](
+        return self._inner_api_calls["get_reference_image"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
 
@@ -1339,9 +1512,7 @@ class ProductSearchClient(object):
             >>> client = vision_v1.ProductSearchClient()
             >>>
             >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
-            >>>
-            >>> # TODO: Initialize `product`:
-            >>> product = ''
+            >>> product = client.product_path('[PROJECT]', '[LOCATION]', '[PRODUCT]')
             >>>
             >>> client.add_product_to_product_set(name, product)
 
@@ -1383,6 +1554,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.AddProductToProductSetRequest(
             name=name, product=product
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["add_product_to_product_set"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1398,19 +1582,13 @@ class ProductSearchClient(object):
         """
         Removes a Product from the specified ProductSet.
 
-        Possible errors:
-
-        -  Returns NOT\_FOUND If the Product is not found under the ProductSet.
-
         Example:
             >>> from google.cloud import vision_v1
             >>>
             >>> client = vision_v1.ProductSearchClient()
             >>>
             >>> name = client.product_set_path('[PROJECT]', '[LOCATION]', '[PRODUCT_SET]')
-            >>>
-            >>> # TODO: Initialize `product`:
-            >>> product = ''
+            >>> product = client.product_path('[PROJECT]', '[LOCATION]', '[PRODUCT]')
             >>>
             >>> client.remove_product_from_product_set(name, product)
 
@@ -1454,6 +1632,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.RemoveProductFromProductSetRequest(
             name=name, product=product
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["remove_product_from_product_set"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -1545,6 +1736,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.ListProductsInProductSetRequest(
             name=name, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -1643,6 +1847,19 @@ class ProductSearchClient(object):
         request = product_search_service_pb2.ImportProductSetsRequest(
             parent=parent, input_config=input_config
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         operation = self._inner_api_calls["import_product_sets"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )

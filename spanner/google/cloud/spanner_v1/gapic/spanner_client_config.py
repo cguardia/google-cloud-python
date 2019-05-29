@@ -2,7 +2,7 @@ config = {
     "interfaces": {
         "google.spanner.v1.Spanner": {
             "retry_codes": {
-                "idempotent": ["DEADLINE_EXCEEDED", "UNAVAILABLE"],
+                "idempotent": ["UNAVAILABLE"],
                 "non_idempotent": [],
                 "long_running": ["UNAVAILABLE"],
             },
@@ -65,6 +65,11 @@ config = {
                     "timeout_millis": 3600000,
                     "retry_codes_name": "non_idempotent",
                     "retry_params_name": "streaming",
+                },
+                "ExecuteBatchDml": {
+                    "timeout_millis": 30000,
+                    "retry_codes_name": "idempotent",
+                    "retry_params_name": "default",
                 },
                 "Read": {
                     "timeout_millis": 30000,

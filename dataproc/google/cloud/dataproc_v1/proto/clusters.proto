@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC.
+// Copyright 2019 Google LLC.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ syntax = "proto3";
 package google.cloud.dataproc.v1;
 
 import "google/api/annotations.proto";
-import "google/cloud/dataproc/v1/operations.proto";
+import "google/cloud/dataproc/v1/shared.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
@@ -28,7 +28,6 @@ option go_package = "google.golang.org/genproto/googleapis/cloud/dataproc/v1;dat
 option java_multiple_files = true;
 option java_outer_classname = "ClustersProto";
 option java_package = "com.google.cloud.dataproc.v1";
-
 
 // The ClusterControllerService provides methods to manage clusters
 // of Compute Engine instances.
@@ -99,8 +98,9 @@ message Cluster {
   // Label **keys** must contain 1 to 63 characters, and must conform to
   // [RFC 1035](https://www.ietf.org/rfc/rfc1035.txt).
   // Label **values** may be empty, but, if present, must contain 1 to 63
-  // characters, and must conform to [RFC 1035](https://www.ietf.org/rfc/rfc1035.txt).
-  // No more than 32 labels can be associated with a cluster.
+  // characters, and must conform to [RFC
+  // 1035](https://www.ietf.org/rfc/rfc1035.txt). No more than 32 labels can be
+  // associated with a cluster.
   map<string, string> labels = 8;
 
   // Output only. Cluster status.
@@ -115,22 +115,25 @@ message Cluster {
 
   // Contains cluster daemon metrics such as HDFS and YARN stats.
   //
-  // **Beta Feature**: This report is available for testing purposes only. It may
-  // be changed before final release.
+  // **Beta Feature**: This report is available for testing purposes only. It
+  // may be changed before final release.
   ClusterMetrics metrics = 9;
 }
 
 // The cluster config.
 message ClusterConfig {
-  // Optional. A Cloud Storage staging bucket used for sharing generated
-  // SSH keys and config. If you do not specify a staging bucket, Cloud
-  // Dataproc will determine an appropriate Cloud Storage location (US,
+  // Optional. A Google Cloud Storage bucket used to stage job
+  // dependencies, config files, and job driver console output.
+  // If you do not specify a staging bucket, Cloud
+  // Dataproc will determine a Cloud Storage location (US,
   // ASIA, or EU) for your cluster's staging bucket according to the Google
-  // Compute Engine zone where your cluster is deployed, and then it will create
-  // and manage this project-level, per-location bucket for you.
+  // Compute Engine zone where your cluster is deployed, and then create
+  // and manage this project-level, per-location bucket (see
+  // [Cloud Dataproc staging
+  // bucket](/dataproc/docs/concepts/configuring-clusters/staging-bucket)).
   string config_bucket = 1;
 
-  // Required. The shared Compute Engine config settings for
+  // Optional. The shared Compute Engine config settings for
   // all instances in a cluster.
   GceClusterConfig gce_cluster_config = 8;
 
@@ -152,9 +155,11 @@ message ClusterConfig {
   // Optional. Commands to execute on each node after config is
   // completed. By default, executables are run on master and all worker nodes.
   // You can test a node's `role` metadata to run an executable on
-  // a master or worker node, as shown below using `curl` (you can also use `wget`):
+  // a master or worker node, as shown below using `curl` (you can also use
+  // `wget`):
   //
-  //     ROLE=$(curl -H Metadata-Flavor:Google http://metadata/computeMetadata/v1/instance/attributes/dataproc-role)
+  //     ROLE=$(curl -H Metadata-Flavor:Google
+  //     http://metadata/computeMetadata/v1/instance/attributes/dataproc-role)
   //     if [[ "${ROLE}" == 'Master' ]]; then
   //       ... master specific actions ...
   //     else
@@ -207,17 +212,17 @@ message GceClusterConfig {
   //
   // A full URL, partial URI, or short name are valid. Examples:
   //
-  // * `https://www.googleapis.com/compute/v1/projects/[project_id]/regions/us-east1/sub0`
-  // * `projects/[project_id]/regions/us-east1/sub0`
+  // * `https://www.googleapis.com/compute/v1/projects/[project_id]/regions/us-east1/subnetworks/sub0`
+  // * `projects/[project_id]/regions/us-east1/subnetworks/sub0`
   // * `sub0`
   string subnetwork_uri = 6;
 
   // Optional. If true, all instances in the cluster will only have internal IP
-  // addresses. By default, clusters are not restricted to internal IP addresses,
-  // and will have ephemeral external IP addresses assigned to each instance.
-  // This `internal_ip_only` restriction can only be enabled for subnetwork
-  // enabled networks, and all off-cluster dependencies must be configured to be
-  // accessible without external IP addresses.
+  // addresses. By default, clusters are not restricted to internal IP
+  // addresses, and will have ephemeral external IP addresses assigned to each
+  // instance. This `internal_ip_only` restriction can only be enabled for
+  // subnetwork enabled networks, and all off-cluster dependencies must be
+  // configured to be accessible without external IP addresses.
   bool internal_ip_only = 7;
 
   // Optional. The service account of the instances. Defaults to the default
@@ -227,7 +232,8 @@ message GceClusterConfig {
   // * roles/logging.logWriter
   // * roles/storage.objectAdmin
   //
-  // (see https://cloud.google.com/compute/docs/access/service-accounts#custom_service_accounts
+  // (see
+  // https://cloud.google.com/compute/docs/access/service-accounts#custom_service_accounts
   // for more information).
   // Example: `[account_id]@[project_id].iam.gserviceaccount.com`
   string service_account = 8;
@@ -253,7 +259,8 @@ message GceClusterConfig {
   repeated string tags = 4;
 
   // The Compute Engine metadata entries to add to all instances (see
-  // [Project and instance metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata#project_and_instance_metadata)).
+  // [Project and instance
+  // metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata#project_and_instance_metadata)).
   map<string, string> metadata = 5;
 }
 
@@ -282,7 +289,8 @@ message InstanceGroupConfig {
   // * `n1-standard-2`
   //
   // **Auto Zone Exception**: If you are using the Cloud Dataproc
-  // [Auto Zone Placement](/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement)
+  // [Auto Zone
+  // Placement](/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement)
   // feature, you must use the short name of the machine type
   // resource, for example, `n1-standard-2`.
   string machine_type_uri = 4;
@@ -290,7 +298,8 @@ message InstanceGroupConfig {
   // Optional. Disk option config settings.
   DiskConfig disk_config = 5;
 
-  // Optional. Specifies that this instance group contains preemptible instances.
+  // Optional. Specifies that this instance group contains preemptible
+  // instances.
   bool is_preemptible = 6;
 
   // Output only. The config for Compute Engine Instance Group
@@ -321,7 +330,8 @@ message ManagedGroupConfig {
 message AcceleratorConfig {
   // Full URL, partial URI, or short name of the accelerator type resource to
   // expose to this instance. See
-  // [Compute Engine AcceleratorTypes](/compute/docs/reference/beta/acceleratorTypes).
+  // [Compute Engine
+  // AcceleratorTypes](/compute/docs/reference/beta/acceleratorTypes).
   //
   // Examples:
   //
@@ -330,7 +340,8 @@ message AcceleratorConfig {
   // * `nvidia-tesla-k80`
   //
   // **Auto Zone Exception**: If you are using the Cloud Dataproc
-  // [Auto Zone Placement](/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement)
+  // [Auto Zone
+  // Placement](/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement)
   // feature, you must use the short name of the accelerator type
   // resource, for example, `nvidia-tesla-k80`.
   string accelerator_type_uri = 1;
@@ -429,17 +440,19 @@ message ClusterStatus {
 
 // Specifies the selection and config of software inside the cluster.
 message SoftwareConfig {
-  // Optional. The version of software inside the cluster. It must be one of the supported
-  // [Cloud Dataproc Versions](/dataproc/docs/concepts/versioning/dataproc-versions#supported_cloud_dataproc_versions),
+  // Optional. The version of software inside the cluster. It must be one of the
+  // supported [Cloud Dataproc
+  // Versions](/dataproc/docs/concepts/versioning/dataproc-versions#supported_cloud_dataproc_versions),
   // such as "1.2" (including a subminor version, such as "1.2.29"), or the
-  // ["preview" version](/dataproc/docs/concepts/versioning/dataproc-versions#other_versions).
-  // If unspecified, it defaults to the latest version.
+  // ["preview"
+  // version](/dataproc/docs/concepts/versioning/dataproc-versions#other_versions).
+  // If unspecified, it defaults to the latest Debian version.
   string image_version = 1;
 
   // Optional. The properties to set on daemon config files.
   //
-  // Property keys are specified in `prefix:property` format, such as
-  // `core:fs.defaultFS`. The following are supported prefixes
+  // Property keys are specified in `prefix:property` format, for example
+  // `core:hadoop.tmp.dir`. The following are supported prefixes
   // and their mappings:
   //
   // * capacity-scheduler: `capacity-scheduler.xml`
@@ -455,6 +468,9 @@ message SoftwareConfig {
   // For more information, see
   // [Cluster properties](/dataproc/docs/concepts/cluster-properties).
   map<string, string> properties = 2;
+
+  // The set of optional components to activate on the cluster.
+  repeated Component optional_components = 3;
 }
 
 // Contains cluster daemon metrics, such as HDFS and YARN stats.

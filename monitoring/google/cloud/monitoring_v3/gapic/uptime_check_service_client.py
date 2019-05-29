@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Accesses the google.monitoring.v3 UptimeCheckService API."""
 
 import functools
@@ -23,6 +24,7 @@ from google.oauth2 import service_account
 import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.config
 import google.api_core.gapic_v1.method
+import google.api_core.gapic_v1.routing_header
 import google.api_core.grpc_helpers
 import google.api_core.page_iterator
 import google.api_core.path_template
@@ -53,6 +55,7 @@ from google.cloud.monitoring_v3.proto import uptime_service_pb2
 from google.cloud.monitoring_v3.proto import uptime_service_pb2_grpc
 from google.protobuf import empty_pb2
 from google.protobuf import field_mask_pb2
+
 
 _GAPIC_LIBRARY_VERSION = pkg_resources.get_distribution(
     "google-cloud-monitoring"
@@ -293,6 +296,19 @@ class UptimeCheckServiceClient(object):
         request = uptime_service_pb2.ListUptimeCheckConfigsRequest(
             parent=parent, page_size=page_size
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         iterator = google.api_core.page_iterator.GRPCIterator(
             client=None,
             method=functools.partial(
@@ -364,6 +380,19 @@ class UptimeCheckServiceClient(object):
             )
 
         request = uptime_service_pb2.GetUptimeCheckConfigRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["get_uptime_check_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -434,6 +463,19 @@ class UptimeCheckServiceClient(object):
         request = uptime_service_pb2.CreateUptimeCheckConfigRequest(
             parent=parent, uptime_check_config=uptime_check_config
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("parent", parent)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["create_uptime_check_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -520,6 +562,19 @@ class UptimeCheckServiceClient(object):
         request = uptime_service_pb2.UpdateUptimeCheckConfigRequest(
             uptime_check_config=uptime_check_config, update_mask=update_mask
         )
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("uptime_check_config.name", uptime_check_config.name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         return self._inner_api_calls["update_uptime_check_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
@@ -579,6 +634,19 @@ class UptimeCheckServiceClient(object):
             )
 
         request = uptime_service_pb2.DeleteUptimeCheckConfigRequest(name=name)
+        if metadata is None:
+            metadata = []
+        metadata = list(metadata)
+        try:
+            routing_header = [("name", name)]
+        except AttributeError:
+            pass
+        else:
+            routing_metadata = google.api_core.gapic_v1.routing_header.to_grpc_metadata(
+                routing_header
+            )
+            metadata.append(routing_metadata)
+
         self._inner_api_calls["delete_uptime_check_config"](
             request, retry=retry, timeout=timeout, metadata=metadata
         )
