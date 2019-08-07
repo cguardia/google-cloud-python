@@ -130,6 +130,7 @@
 from __future__ import print_function
 
 import ast
+import sys
 import time
 from concurrent import futures
 
@@ -139,14 +140,15 @@ try:
     from IPython.core import magic_arguments
 except ImportError:  # pragma: NO COVER
     raise ImportError("This module can only be loaded in IPython.")
-try:
-    from google.cloud import bigquery_storage_v1beta1
-except ImportError:  # pragma: NO COVER
-    bigquery_storage_v1beta1 = None
 
+from google.api_core import client_info
 import google.auth
 from google.cloud import bigquery
 from google.cloud.bigquery.dbapi import _helpers
+import six
+
+
+IPYTHON_USER_AGENT = "ipython-{}".format(IPython.__version__)
 
 
 class Context(object):
@@ -159,7 +161,9 @@ class Context(object):
     def __init__(self):
         self._credentials = None
         self._project = None
+        self._connection = None
         self._use_bqstorage_api = None
+        self._default_query_job_config = bigquery.QueryJobConfig()
 
     @property
     def credentials(self):
@@ -236,6 +240,28 @@ class Context(object):
     def use_bqstorage_api(self, value):
         self._use_bqstorage_api = value
 
+    @property
+    def default_query_job_config(self):
+        """google.cloud.bigquery.job.QueryJobConfig: Default job
+        configuration for queries.
+
+        The context's :class:`~google.cloud.bigquery.job.QueryJobConfig` is
+        used for queries. Some properties can be overridden with arguments to
+        the magics.
+
+        Example:
+            Manually setting the default value for ``maximum_bytes_billed``
+            to 100 MB:
+
+            >>> from google.cloud.bigquery import magics
+            >>> magics.context.default_query_job_config.maximum_bytes_billed = 100000000
+        """
+        return self._default_query_job_config
+
+    @default_query_job_config.setter
+    def default_query_job_config(self, value):
+        self._default_query_job_config = value
+
 
 context = Context()
 
@@ -289,6 +315,14 @@ def _run_query(client, query, job_config=None):
     type=str,
     default=None,
     help=("Project to use for executing this query. Defaults to the context project."),
+)
+@magic_arguments.argument(
+    "--maximum_bytes_billed",
+    default=None,
+    help=(
+        "maximum_bytes_billed to use for executing this query. Defaults to "
+        "the context default_query_job_config.maximum_bytes_billed."
+    ),
 )
 @magic_arguments.argument(
     "--use_legacy_sql",
@@ -362,17 +396,39 @@ def _cell_magic(line, query):
             )
 
     project = args.project or context.project
-    client = bigquery.Client(project=project, credentials=context.credentials)
+    client = bigquery.Client(
+        project=project,
+        credentials=context.credentials,
+        default_query_job_config=context.default_query_job_config,
+        client_info=client_info.ClientInfo(user_agent=IPYTHON_USER_AGENT),
+    )
+    if context._connection:
+        client._connection = context._connection
     bqstorage_client = _make_bqstorage_client(
         args.use_bqstorage_api or context.use_bqstorage_api, context.credentials
     )
     job_config = bigquery.job.QueryJobConfig()
     job_config.query_parameters = params
     job_config.use_legacy_sql = args.use_legacy_sql
-    query_job = _run_query(client, query, job_config)
+
+    if args.maximum_bytes_billed == "None":
+        job_config.maximum_bytes_billed = 0
+    elif args.maximum_bytes_billed is not None:
+        value = int(args.maximum_bytes_billed)
+        job_config.maximum_bytes_billed = value
+
+    error = None
+    try:
+        query_job = _run_query(client, query, job_config)
+    except Exception as ex:
+        error = str(ex)
 
     if not args.verbose:
         display.clear_output()
+
+    if error:
+        print("\nERROR:\n", error, file=sys.stderr)
+        return
 
     result = query_job.to_dataframe(bqstorage_client=bqstorage_client)
     if args.destination_var:
@@ -385,10 +441,24 @@ def _make_bqstorage_client(use_bqstorage_api, credentials):
     if not use_bqstorage_api:
         return None
 
-    if bigquery_storage_v1beta1 is None:
-        raise ImportError(
-            "Install the google-cloud-bigquery-storage and fastavro packages "
+    try:
+        from google.cloud import bigquery_storage_v1beta1
+    except ImportError as err:
+        customized_error = ImportError(
+            "Install the google-cloud-bigquery-storage and pyarrow packages "
             "to use the BigQuery Storage API."
         )
+        six.raise_from(customized_error, err)
 
-    return bigquery_storage_v1beta1.BigQueryStorageClient(credentials=credentials)
+    try:
+        from google.api_core.gapic_v1 import client_info as gapic_client_info
+    except ImportError as err:
+        customized_error = ImportError(
+            "Install the grpcio package to use the BigQuery Storage API."
+        )
+        six.raise_from(customized_error, err)
+
+    return bigquery_storage_v1beta1.BigQueryStorageClient(
+        credentials=credentials,
+        client_info=gapic_client_info.ClientInfo(user_agent=IPYTHON_USER_AGENT),
+    )

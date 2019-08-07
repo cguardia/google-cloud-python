@@ -27,6 +27,7 @@ import re
 
 import six
 import pytest
+import pytz
 
 try:
     from google.cloud import bigquery_storage_v1beta1
@@ -36,6 +37,11 @@ try:
     import pandas
 except ImportError:  # pragma: NO COVER
     pandas = None
+try:
+    import pyarrow
+    import pyarrow.types
+except ImportError:  # pragma: NO COVER
+    pyarrow = None
 try:
     import IPython
     from IPython.utils import io
@@ -54,6 +60,7 @@ from google.api_core.exceptions import InternalServerError
 from google.api_core.exceptions import ServiceUnavailable
 from google.api_core.exceptions import TooManyRequests
 from google.cloud import bigquery
+from google.cloud import bigquery_v2
 from google.cloud.bigquery.dataset import Dataset
 from google.cloud.bigquery.dataset import DatasetReference
 from google.cloud.bigquery.table import Table
@@ -99,6 +106,11 @@ TIME_PARTITIONING_CLUSTERING_FIELDS_SCHEMA = [
         ],
     ),
 ]
+
+# The VPC-SC team maintains a mirror of the GCS bucket used for code
+# samples. The public bucket crosses the configured security boundary.
+# See: https://github.com/googleapis/google-cloud-python/issues/8550
+SAMPLES_BUCKET = os.environ.get("GCLOUD_TEST_SAMPLES_BUCKET", "cloud-samples-data")
 
 retry_storage_errors = RetryErrors(
     (TooManyRequests, InternalServerError, ServiceUnavailable)
@@ -622,6 +634,198 @@ class TestBigQuery(unittest.TestCase):
             sorted(row_tuples, key=by_wavelength), sorted(ROWS, key=by_wavelength)
         )
 
+    @unittest.skipIf(pandas is None, "Requires `pandas`")
+    @unittest.skipIf(pyarrow is None, "Requires `pyarrow`")
+    def test_load_table_from_dataframe_w_nulls(self):
+        """Test that a DataFrame with null columns can be uploaded if a
+        BigQuery schema is specified.
+
+        See: https://github.com/googleapis/google-cloud-python/issues/7370
+        """
+        # Schema with all scalar types.
+        scalars_schema = (
+            bigquery.SchemaField("bool_col", "BOOLEAN"),
+            bigquery.SchemaField("bytes_col", "BYTES"),
+            bigquery.SchemaField("date_col", "DATE"),
+            bigquery.SchemaField("dt_col", "DATETIME"),
+            bigquery.SchemaField("float_col", "FLOAT"),
+            bigquery.SchemaField("geo_col", "GEOGRAPHY"),
+            bigquery.SchemaField("int_col", "INTEGER"),
+            bigquery.SchemaField("num_col", "NUMERIC"),
+            bigquery.SchemaField("str_col", "STRING"),
+            bigquery.SchemaField("time_col", "TIME"),
+            bigquery.SchemaField("ts_col", "TIMESTAMP"),
+        )
+        table_schema = scalars_schema + (
+            # TODO: Array columns can't be read due to NULLABLE versus REPEATED
+            #       mode mismatch. See:
+            #       https://issuetracker.google.com/133415569#comment3
+            # bigquery.SchemaField("array_col", "INTEGER", mode="REPEATED"),
+            # TODO: Support writing StructArrays to Parquet. See:
+            #       https://jira.apache.org/jira/browse/ARROW-2587
+            # bigquery.SchemaField("struct_col", "RECORD", fields=scalars_schema),
+        )
+        num_rows = 100
+        nulls = [None] * num_rows
+        dataframe = pandas.DataFrame(
+            {
+                "bool_col": nulls,
+                "bytes_col": nulls,
+                "date_col": nulls,
+                "dt_col": nulls,
+                "float_col": nulls,
+                "geo_col": nulls,
+                "int_col": nulls,
+                "num_col": nulls,
+                "str_col": nulls,
+                "time_col": nulls,
+                "ts_col": nulls,
+            }
+        )
+
+        dataset_id = _make_dataset_id("bq_load_test")
+        self.temp_dataset(dataset_id)
+        table_id = "{}.{}.load_table_from_dataframe_w_nulls".format(
+            Config.CLIENT.project, dataset_id
+        )
+
+        # Create the table before loading so that schema mismatch errors are
+        # identified.
+        table = retry_403(Config.CLIENT.create_table)(
+            Table(table_id, schema=table_schema)
+        )
+        self.to_delete.insert(0, table)
+
+        job_config = bigquery.LoadJobConfig(schema=table_schema)
+        load_job = Config.CLIENT.load_table_from_dataframe(
+            dataframe, table_id, job_config=job_config
+        )
+        load_job.result()
+
+        table = Config.CLIENT.get_table(table)
+        self.assertEqual(tuple(table.schema), table_schema)
+        self.assertEqual(table.num_rows, num_rows)
+
+    @unittest.skipIf(pandas is None, "Requires `pandas`")
+    @unittest.skipIf(pyarrow is None, "Requires `pyarrow`")
+    def test_load_table_from_dataframe_w_required(self):
+        """Test that a DataFrame with required columns can be uploaded if a
+        BigQuery schema is specified.
+
+        See: https://github.com/googleapis/google-cloud-python/issues/8093
+        """
+        table_schema = (
+            bigquery.SchemaField("name", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("age", "INTEGER", mode="REQUIRED"),
+        )
+
+        records = [{"name": "Chip", "age": 2}, {"name": "Dale", "age": 3}]
+        dataframe = pandas.DataFrame(records)
+        job_config = bigquery.LoadJobConfig(schema=table_schema)
+        dataset_id = _make_dataset_id("bq_load_test")
+        self.temp_dataset(dataset_id)
+        table_id = "{}.{}.load_table_from_dataframe_w_required".format(
+            Config.CLIENT.project, dataset_id
+        )
+
+        # Create the table before loading so that schema mismatch errors are
+        # identified.
+        table = retry_403(Config.CLIENT.create_table)(
+            Table(table_id, schema=table_schema)
+        )
+        self.to_delete.insert(0, table)
+
+        job_config = bigquery.LoadJobConfig(schema=table_schema)
+        load_job = Config.CLIENT.load_table_from_dataframe(
+            dataframe, table_id, job_config=job_config
+        )
+        load_job.result()
+
+        table = Config.CLIENT.get_table(table)
+        self.assertEqual(tuple(table.schema), table_schema)
+        self.assertEqual(table.num_rows, 2)
+
+    @unittest.skipIf(pandas is None, "Requires `pandas`")
+    @unittest.skipIf(pyarrow is None, "Requires `pyarrow`")
+    def test_load_table_from_dataframe_w_explicit_schema(self):
+        # Schema with all scalar types.
+        scalars_schema = (
+            bigquery.SchemaField("bool_col", "BOOLEAN"),
+            bigquery.SchemaField("bytes_col", "BYTES"),
+            bigquery.SchemaField("date_col", "DATE"),
+            bigquery.SchemaField("dt_col", "DATETIME"),
+            bigquery.SchemaField("float_col", "FLOAT"),
+            bigquery.SchemaField("geo_col", "GEOGRAPHY"),
+            bigquery.SchemaField("int_col", "INTEGER"),
+            bigquery.SchemaField("num_col", "NUMERIC"),
+            bigquery.SchemaField("str_col", "STRING"),
+            bigquery.SchemaField("time_col", "TIME"),
+            bigquery.SchemaField("ts_col", "TIMESTAMP"),
+        )
+        table_schema = scalars_schema + (
+            # TODO: Array columns can't be read due to NULLABLE versus REPEATED
+            #       mode mismatch. See:
+            #       https://issuetracker.google.com/133415569#comment3
+            # bigquery.SchemaField("array_col", "INTEGER", mode="REPEATED"),
+            # TODO: Support writing StructArrays to Parquet. See:
+            #       https://jira.apache.org/jira/browse/ARROW-2587
+            # bigquery.SchemaField("struct_col", "RECORD", fields=scalars_schema),
+        )
+        dataframe = pandas.DataFrame(
+            {
+                "bool_col": [True, None, False],
+                "bytes_col": [b"abc", None, b"def"],
+                "date_col": [datetime.date(1, 1, 1), None, datetime.date(9999, 12, 31)],
+                "dt_col": [
+                    datetime.datetime(1, 1, 1, 0, 0, 0),
+                    None,
+                    datetime.datetime(9999, 12, 31, 23, 59, 59, 999999),
+                ],
+                "float_col": [float("-inf"), float("nan"), float("inf")],
+                "geo_col": [
+                    "POINT(30 10)",
+                    None,
+                    "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))",
+                ],
+                "int_col": [-9223372036854775808, None, 9223372036854775807],
+                "num_col": [
+                    decimal.Decimal("-99999999999999999999999999999.999999999"),
+                    None,
+                    decimal.Decimal("99999999999999999999999999999.999999999"),
+                ],
+                "str_col": ["abc", None, "def"],
+                "time_col": [
+                    datetime.time(0, 0, 0),
+                    None,
+                    datetime.time(23, 59, 59, 999999),
+                ],
+                "ts_col": [
+                    datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=pytz.utc),
+                    None,
+                    datetime.datetime(
+                        9999, 12, 31, 23, 59, 59, 999999, tzinfo=pytz.utc
+                    ),
+                ],
+            },
+            dtype="object",
+        )
+
+        dataset_id = _make_dataset_id("bq_load_test")
+        self.temp_dataset(dataset_id)
+        table_id = "{}.{}.load_table_from_dataframe_w_explicit_schema".format(
+            Config.CLIENT.project, dataset_id
+        )
+
+        job_config = bigquery.LoadJobConfig(schema=table_schema)
+        load_job = Config.CLIENT.load_table_from_dataframe(
+            dataframe, table_id, job_config=job_config
+        )
+        load_job.result()
+
+        table = Config.CLIENT.get_table(table_id)
+        self.assertEqual(tuple(table.schema), table_schema)
+        self.assertEqual(table.num_rows, 3)
+
     def test_load_avro_from_uri_then_dump_table(self):
         from google.cloud.bigquery.job import CreateDisposition
         from google.cloud.bigquery.job import SourceFormat
@@ -1043,6 +1247,15 @@ class TestBigQuery(unittest.TestCase):
         with self.assertRaises(concurrent.futures.TimeoutError):
             # 1 second is much too short for this query.
             query_job.result(timeout=1)
+
+    def test_query_w_page_size(self):
+        page_size = 45
+        query_job = Config.CLIENT.query(
+            "SELECT word FROM `bigquery-public-data.samples.shakespeare`;",
+            job_id_prefix="test_query_w_page_size_",
+        )
+        iterator = query_job.result(page_size=page_size)
+        self.assertEqual(next(iterator.pages).num_items, page_size)
 
     def test_query_statistics(self):
         """
@@ -1658,6 +1871,42 @@ class TestBigQuery(unittest.TestCase):
         expected_rows = [("Some value", record)]
         self.assertEqual(row_tuples, expected_rows)
 
+    def test_create_routine(self):
+        routine_name = "test_routine"
+        dataset = self.temp_dataset(_make_dataset_id("create_routine"))
+        float64_type = bigquery_v2.types.StandardSqlDataType(
+            type_kind=bigquery_v2.enums.StandardSqlDataType.TypeKind.FLOAT64
+        )
+        routine = bigquery.Routine(
+            dataset.routine(routine_name),
+            language="JAVASCRIPT",
+            type_="SCALAR_FUNCTION",
+            return_type=float64_type,
+            imported_libraries=[
+                "gs://{}/bigquery/udfs/max-value.js".format(SAMPLES_BUCKET)
+            ],
+        )
+        routine.arguments = [
+            bigquery.RoutineArgument(
+                name="arr",
+                data_type=bigquery_v2.types.StandardSqlDataType(
+                    type_kind=bigquery_v2.enums.StandardSqlDataType.TypeKind.ARRAY,
+                    array_element_type=float64_type,
+                ),
+            )
+        ]
+        routine.body = "return maxValue(arr)"
+        query_string = "SELECT `{}`([-100.0, 3.14, 100.0, 42.0]) as max_value;".format(
+            str(routine.reference)
+        )
+
+        routine = retry_403(Config.CLIENT.create_routine)(routine)
+        query_job = retry_403(Config.CLIENT.query)(query_string)
+        rows = list(query_job.result())
+
+        assert len(rows) == 1
+        assert rows[0].max_value == 100.0
+
     def test_create_table_rows_fetch_nested_schema(self):
         table_name = "test_table"
         dataset = self.temp_dataset(_make_dataset_id("create_table_nested_schema"))
@@ -1717,6 +1966,71 @@ class TestBigQuery(unittest.TestCase):
 
     def _fetch_dataframe(self, query):
         return Config.CLIENT.query(query).result().to_dataframe()
+
+    @unittest.skipIf(pyarrow is None, "Requires `pyarrow`")
+    @unittest.skipIf(
+        bigquery_storage_v1beta1 is None, "Requires `google-cloud-bigquery-storage`"
+    )
+    def test_nested_table_to_arrow(self):
+        from google.cloud.bigquery.job import SourceFormat
+        from google.cloud.bigquery.job import WriteDisposition
+
+        SF = bigquery.SchemaField
+        schema = [
+            SF("string_col", "STRING", mode="NULLABLE"),
+            SF(
+                "record_col",
+                "RECORD",
+                mode="NULLABLE",
+                fields=[
+                    SF("nested_string", "STRING", mode="NULLABLE"),
+                    SF("nested_repeated", "INTEGER", mode="REPEATED"),
+                ],
+            ),
+            SF("float_col", "FLOAT", mode="NULLABLE"),
+        ]
+        record = {"nested_string": "another string value", "nested_repeated": [0, 1, 2]}
+        to_insert = [
+            {"string_col": "Some value", "record_col": record, "float_col": 3.14}
+        ]
+        rows = [json.dumps(row) for row in to_insert]
+        body = six.BytesIO("{}\n".format("\n".join(rows)).encode("ascii"))
+        table_id = "test_table"
+        dataset = self.temp_dataset(_make_dataset_id("nested_df"))
+        table = dataset.table(table_id)
+        self.to_delete.insert(0, table)
+        job_config = bigquery.LoadJobConfig()
+        job_config.write_disposition = WriteDisposition.WRITE_TRUNCATE
+        job_config.source_format = SourceFormat.NEWLINE_DELIMITED_JSON
+        job_config.schema = schema
+        # Load a table using a local JSON file from memory.
+        Config.CLIENT.load_table_from_file(body, table, job_config=job_config).result()
+        bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient(
+            credentials=Config.CLIENT._credentials
+        )
+
+        tbl = Config.CLIENT.list_rows(table, selected_fields=schema).to_arrow(
+            bqstorage_client=bqstorage_client
+        )
+
+        self.assertIsInstance(tbl, pyarrow.Table)
+        self.assertEqual(tbl.num_rows, 1)
+        self.assertEqual(tbl.num_columns, 3)
+        # Columns may not appear in the requested order.
+        self.assertTrue(
+            pyarrow.types.is_float64(tbl.schema.field_by_name("float_col").type)
+        )
+        self.assertTrue(
+            pyarrow.types.is_string(tbl.schema.field_by_name("string_col").type)
+        )
+        record_col = tbl.schema.field_by_name("record_col").type
+        self.assertTrue(pyarrow.types.is_struct(record_col))
+        self.assertEqual(record_col.num_children, 2)
+        self.assertEqual(record_col[0].name, "nested_string")
+        self.assertTrue(pyarrow.types.is_string(record_col[0].type))
+        self.assertEqual(record_col[1].name, "nested_repeated")
+        self.assertTrue(pyarrow.types.is_list(record_col[1].type))
+        self.assertTrue(pyarrow.types.is_int64(record_col[1].type.value_type))
 
     @unittest.skipIf(pandas is None, "Requires `pandas`")
     def test_nested_table_to_dataframe(self):

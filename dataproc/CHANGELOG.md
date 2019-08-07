@@ -4,6 +4,51 @@
 
 [1]: https://pypi.org/project/google-cloud-dataproc/#history
 
+## 0.5.0
+
+07-24-2019 16:02 PDT
+
+### Implementation Changes
+- Allow kwargs to be passed to create_channel (via synth). ([#8387](https://github.com/googleapis/google-cloud-python/pull/8387))
+
+### New Features
+- Add 'client_options' support, update list method docstrings (via synth). ([#8505](https://github.com/googleapis/google-cloud-python/pull/8505))
+
+### Dependencies
+- Bump minimum version for google-api-core to 1.14.0. ([#8709](https://github.com/googleapis/google-cloud-python/pull/8709))
+
+### Documentation
+- Link to googleapis.dev documentation in READMEs. ([#8705](https://github.com/googleapis/google-cloud-python/pull/8705))
+- Add compatibility check badges to READMEs. ([#8288](https://github.com/googleapis/google-cloud-python/pull/8288))
+
+### Internal / Testing Changes
+- Pin black version (via synth). ([#8579](https://github.com/googleapis/google-cloud-python/pull/8579))
+- Add docs job to publish to googleapis.dev. ([#8464](https://github.com/googleapis/google-cloud-python/pull/8464))
+- Declare encoding as utf-8 in pb2 files (via synth). ([#8349](https://github.com/googleapis/google-cloud-python/pull/8349))
+- Add disclaimer to auto-generated template files (via synth).  ([#8311](https://github.com/googleapis/google-cloud-python/pull/8311))
+- Supress checking 'cov-fail-under' in nox default session (via synth). ([#8237](https://github.com/googleapis/google-cloud-python/pull/8237))
+
+## 0.4.0
+
+05-30-2019 05:52 PDT
+
+### Implementation Changes
+- Update docs/conf.py, add routing header to method metadata, fix docstrings (via synth). ([#7924](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7924))
+
+### New Features
+- Add new service features for v1, including autoscaling (via synth). ([#8152](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/8152))
+- Add new service features for v1beta2, including autoscaling (via synth). ([#8119](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/8119))
+
+### Documentation
+- Add nox session `docs` ([#7429](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7429))
+- Add clarifying comment to blacken nox target. ([#7388](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7388))
+
+### Internal / Testing Changes
+- Re-add import of 'operations.proto' to V1 'clusters.proto' (via synth). ([#8188](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/8188))
+- Add empty lines (via synth). ([#8054](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/8054))
+- Remove classifier for Python 3.4 for end-of-life. ([#7535](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7535))
+- Copy lintified proto files (via synth). ([#7465](https://github.com/GoogleCloudPlatform/google-cloud-python/pull/7465))
+
 ## 0.3.1
 
 02-15-2019 12:36 PST
